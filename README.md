@@ -1,6 +1,3 @@
 # Wavefront Dropwizard Metrics Reporter
 
-There are two versions of this Reporter available:
-
-- [DropWizard Metrics 3.1](https://github.com/wavefrontHQ/java/tree/master/dropwizard-metrics/3.1)
-- [DropWizard Metrics 4.0](https://github.com/wavefrontHQ/java/tree/master/dropwizard-metrics/4.0)
+See [Wavefront Dropwizard Metrics](https://github.com/wavefrontHQ/java/tree/master/dropwizard-metrics/dropwizard-metrics) for a Wavefront Reporter compatible with versions 3.1.x, 3.2.x and 4.0.x of Dropwizard Metrics.
