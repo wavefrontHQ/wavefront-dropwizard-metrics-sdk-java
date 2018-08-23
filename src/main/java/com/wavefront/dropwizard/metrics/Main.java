@@ -125,6 +125,7 @@ public class Main {
       timer.update(i, TimeUnit.SECONDS);
       dropwizardHistogram.update(i);
       wavefrontHistogram.update(i);
+      wavefrontHistogram.update(i * 1.0);
       Thread.sleep(50);
     }
   }

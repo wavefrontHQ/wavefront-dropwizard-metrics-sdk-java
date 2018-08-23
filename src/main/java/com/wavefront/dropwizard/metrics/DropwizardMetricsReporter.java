@@ -23,6 +23,7 @@ import com.codahale.metrics.jvm.ThreadStatesGaugeSet;
 import com.wavefront.sdk.common.WavefrontSender;
 import com.wavefront.sdk.direct_ingestion.WavefrontDirectIngestionClient;
 import com.wavefront.sdk.entities.histograms.HistogramGranularity;
+import com.wavefront.sdk.entities.histograms.WavefrontHistogramImpl;
 import com.wavefront.sdk.proxy.WavefrontProxyClient;
 
 import java.io.IOException;
@@ -42,8 +43,8 @@ import java.util.regex.Pattern;
 import static com.wavefront.sdk.common.Constants.DELTA_PREFIX;
 
 /**
- * A reporter which publishes metric values to a Wavefront Proxy from a
- * Dropwizard {@link MetricRegistry}.
+ * A reporter which publishes metric values to a Wavefront cluster via proxy or direct ingestion
+ * from a Dropwizard {@link MetricRegistry}.
  *
  * @author Sushant Dewan (sushant@wavefront.com).
  */
@@ -326,7 +327,7 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
       try {
         wavefrontSender.close();
       } catch (IOException e) {
-        LOGGER.log(Level.FINE, "Error disconnecting from Wavefront", e);
+        LOGGER.log(Level.WARNING, "Error disconnecting from Wavefront", e);
       }
     }
   }
@@ -360,7 +361,7 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
   private void reportHistogram(String name, Histogram histogram) throws IOException {
     if (histogram instanceof WavefrontHistogram) {
       String histogramName = prefixAndSanitize(name);
-      for (com.wavefront.sdk.entities.histograms.WavefrontHistogram.Distribution distribution :
+      for (WavefrontHistogramImpl.Distribution distribution :
           ((WavefrontHistogram) histogram).flushDistributions()) {
         wavefrontSender.sendDistribution(histogramName, distribution.centroids,
             histogramGranularities, distribution.timestamp, source, reporterPointTags);

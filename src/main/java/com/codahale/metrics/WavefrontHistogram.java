@@ -2,6 +2,8 @@ package com.codahale.metrics;
 
 import com.google.common.annotations.VisibleForTesting;
 
+import com.wavefront.sdk.entities.histograms.WavefrontHistogramImpl;
+
 import java.io.OutputStream;
 import java.util.List;
 import java.util.function.Supplier;
@@ -9,13 +11,13 @@ import java.util.function.Supplier;
 /**
  * WavefrontHistogram implementation for com.codahale.metrics
  * Caveat: Cannot use the same WavefrontHistogram registry for multiple reporters as the reporter
- * will change the state of the DeltaCounter every time the value is reported.
+ * will change the state of the WavefrontHistogram every time the value is reported.
  *
  * @author Sushant Dewan (sushant@wavefront.com).
  */
 public class WavefrontHistogram extends Histogram implements Metric {
 
-  private final com.wavefront.sdk.entities.histograms.WavefrontHistogram delegate;
+  private final WavefrontHistogramImpl delegate;
 
   public static WavefrontHistogram get(MetricRegistry registry, String metricName) {
     return get(registry, metricName, System::currentTimeMillis);
@@ -43,7 +45,7 @@ public class WavefrontHistogram extends Histogram implements Metric {
 
   private WavefrontHistogram(TDigestReservoir reservoir, Supplier<Long> clockMillis) {
     super(reservoir);
-    delegate = new com.wavefront.sdk.entities.histograms.WavefrontHistogram(clockMillis);
+    delegate = new WavefrontHistogramImpl(clockMillis);
   }
 
   @Override
@@ -56,6 +58,10 @@ public class WavefrontHistogram extends Histogram implements Metric {
     delegate.update(value);
   }
 
+  public void update(double value) {
+    delegate.update(value);
+  }
+
   @Override
   public long getCount() {
     return delegate.getCount();
@@ -63,7 +69,7 @@ public class WavefrontHistogram extends Histogram implements Metric {
 
   @Override
   public Snapshot getSnapshot() {
-    final com.wavefront.sdk.entities.histograms.WavefrontHistogram.Snapshot delegateSnapshot =
+    final WavefrontHistogramImpl.Snapshot delegateSnapshot =
         delegate.getSnapshot();
 
     return new Snapshot() {
@@ -138,7 +144,7 @@ public class WavefrontHistogram extends Histogram implements Metric {
     };
   }
 
-  public List<com.wavefront.sdk.entities.histograms.WavefrontHistogram.Distribution> flushDistributions() {
+  public List<WavefrontHistogramImpl.Distribution> flushDistributions() {
     return delegate.flushDistributions();
   }
 
