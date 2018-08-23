@@ -313,7 +313,7 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
       try {
         wavefrontSender.close();
       } catch (IOException e1) {
-        LOGGER.log(Level.WARNING, "Error closing Wavefront", e);
+        LOGGER.log(Level.WARNING, "Error closing Wavefront", e1);
       }
     }
   }
