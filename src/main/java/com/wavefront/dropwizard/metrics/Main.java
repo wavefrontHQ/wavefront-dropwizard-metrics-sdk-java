@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableSet;
 
 import com.codahale.metrics.Clock;
 import com.codahale.metrics.Counter;
+import com.codahale.metrics.DeltaCounter;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
@@ -106,6 +107,7 @@ public class Main {
     /* 'notMyCounter' won't be reported as it does not begin with prefix - 'my*'  */
     Counter notReported = metricRegistry.counter("notMyCounter");
     Counter counter = metricRegistry.counter("myCounter");
+    DeltaCounter deltaCounter = DeltaCounter.get(metricRegistry, "myDeltaCounter");
     AtomicInteger bufferSize = new AtomicInteger();
     Gauge gauge = metricRegistry.register("myGauge", () -> bufferSize.get());
     Meter meter = metricRegistry.meter("myMeter");
@@ -116,6 +118,7 @@ public class Main {
 
     for (int i = 0; i < 50; i++) {
       counter.inc();
+      deltaCounter.inc();
       notReported.inc();
       bufferSize.set(10 * i);
       meter.mark(i);
