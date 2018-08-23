@@ -386,7 +386,7 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
     if (counter instanceof DeltaCounter) {
       long count = counter.getCount();
       name = DELTA_PREFIX + prefixAndSanitize(name.substring(1), "count");
-      wavefrontSender.sendMetric(name, count,clock.getTime() / 1000, source, reporterPointTags);
+      wavefrontSender.sendDeltaCounter(name, count, source, reporterPointTags);
       counter.dec(count);
     } else {
       wavefrontSender.sendMetric(prefixAndSanitize(name, "count"), counter.getCount(),
