@@ -7,7 +7,7 @@ If you are using Maven, add following maven dependency to your pom.xml
 ```
 <dependency>
     <groupId>com.wavefront</groupId>
-    <artifactId>dropwizard-metrics</artifactId>
+    <artifactId>dropwizard-metrics-sdk</artifactId>
     <version>0.9.0</version>
 </dependency>
 ```
