@@ -211,30 +211,15 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
     }
 
     /**
-     * Builds a {@link DropwizardMetricsReporter} with the given properties,
-     * sending metrics directly to a given Wavefront server using direct ingestion APIs.
+     * Builds a {@link DropwizardMetricsReporter} with the given properties, sending metrics and
+     * histograms directly to a given Wavefront server using either proxy or direct ingestion APIs.
      *
-     * @param wavefrontDirectIngestionClient Wavefront direct ingestion client
-     *                                       to send various Wavefront atoms.
+     * @param wavefrontSender Wavefront Sender to send various Wavefront atoms.
      * @return a {@link DropwizardMetricsReporter}
      */
-    public DropwizardMetricsReporter build(
-            WavefrontDirectIngestionClient wavefrontDirectIngestionClient) {
-      return new DropwizardMetricsReporter(registry, wavefrontDirectIngestionClient, clock, prefix,
+    public DropwizardMetricsReporter build(WavefrontSender wavefrontSender) {
+      return new DropwizardMetricsReporter(registry, wavefrontSender, clock, prefix,
           source, reporterPointTags, filter, includeJvmMetrics,
-          disabledMetricAttributes, histogramGranularities);
-    }
-
-    /**
-     * Builds a {@link DropwizardMetricsReporter} with the given properties,
-     * sending metrics using the given {@link WavefrontSender}.
-     *
-     * @param wavefrontProxyClient Wavefront proxy client to send various Wavefront atoms.
-     * @return a {@link DropwizardMetricsReporter}
-     */
-    public DropwizardMetricsReporter build(WavefrontProxyClient wavefrontProxyClient) {
-      return new DropwizardMetricsReporter(registry, wavefrontProxyClient, clock, prefix, source,
-          reporterPointTags, filter, includeJvmMetrics,
           disabledMetricAttributes, histogramGranularities);
     }
   }
