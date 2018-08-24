@@ -1,7 +1,5 @@
 package com.codahale.metrics;
 
-import com.google.common.annotations.VisibleForTesting;
-
 import com.wavefront.sdk.entities.histograms.WavefrontHistogramImpl;
 
 import java.io.OutputStream;
@@ -23,7 +21,6 @@ public class WavefrontHistogram extends Histogram implements Metric {
     return get(registry, metricName, System::currentTimeMillis);
   }
 
-  @VisibleForTesting
   public static synchronized WavefrontHistogram get(MetricRegistry registry,
                                                     String metricName,
                                                     Supplier<Long> clock) {

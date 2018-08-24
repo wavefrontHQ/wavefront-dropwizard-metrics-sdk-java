@@ -1,7 +1,5 @@
 package com.codahale.metrics;
 
-import com.google.common.annotations.VisibleForTesting;
-
 import com.wavefront.sdk.common.Constants;
 
 /**
@@ -17,7 +15,6 @@ public class DeltaCounter extends Counter {
   private DeltaCounter() {
   }
 
-  @VisibleForTesting
   public static synchronized DeltaCounter get(MetricRegistry registry, String metricName) {
     if (registry == null || metricName == null || metricName.isEmpty()) {
       throw new IllegalArgumentException("Invalid arguments");
