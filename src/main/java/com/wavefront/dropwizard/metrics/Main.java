@@ -1,8 +1,5 @@
 package com.wavefront.dropwizard.metrics;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-
 import com.codahale.metrics.Clock;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.DeltaCounter;
@@ -18,6 +15,9 @@ import com.wavefront.sdk.direct_ingestion.WavefrontDirectIngestionClient;
 import com.wavefront.sdk.proxy.WavefrontProxyClient;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -66,9 +66,10 @@ public class Main {
     });
 
     /* Set reporter level point tags map for your metrics and histograms */
-    builder.withReporterPointTags(ImmutableMap.<String, String>builder().
-        put("env", "Staging").
-        put("location", "SF").build());
+    builder.withReporterPointTags(new HashMap<String, String>() {{
+      put("env", "Staging");
+      put("location", "SF");
+    }});
 
     /* Add a specific reporter level point tag key value for your metrics and histograms */
     builder.withReporterPointTag("cluster", "us-west");
@@ -77,8 +78,10 @@ public class Main {
     builder.filter(MetricFilter.startsWith("my"));
 
     /* Don't report stddev and m15 */
-    builder.disabledMetricAttributes(ImmutableSet.<MetricAttribute>builder().
-        add(MetricAttribute.STDDEV).add(MetricAttribute.M15_RATE).build());
+    Set<MetricAttribute> set = new HashSet<>();
+    set.add(MetricAttribute.STDDEV);
+    set.add(MetricAttribute.M15_RATE);
+    builder.disabledMetricAttributes(set);
 
     /* Invoke this method if you want to report JVM metrics for your Java app */
     builder.withJvmMetrics();
