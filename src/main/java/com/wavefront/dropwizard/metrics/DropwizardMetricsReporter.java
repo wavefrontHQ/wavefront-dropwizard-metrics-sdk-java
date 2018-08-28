@@ -21,10 +21,8 @@ import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
 import com.codahale.metrics.jvm.SafeFileDescriptorRatioGauge;
 import com.codahale.metrics.jvm.ThreadStatesGaugeSet;
 import com.wavefront.sdk.common.WavefrontSender;
-import com.wavefront.sdk.direct_ingestion.WavefrontDirectIngestionClient;
 import com.wavefront.sdk.entities.histograms.HistogramGranularity;
 import com.wavefront.sdk.entities.histograms.WavefrontHistogramImpl;
-import com.wavefront.sdk.proxy.WavefrontProxyClient;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
@@ -50,7 +48,7 @@ import static com.wavefront.sdk.common.Constants.DELTA_PREFIX;
  */
 public class DropwizardMetricsReporter extends ScheduledReporter {
 
-  private static final Logger LOGGER =
+  private static final Logger logger =
       Logger.getLogger(DropwizardMetricsReporter.class.getCanonicalName());
 
   /**
@@ -295,11 +293,11 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
       }
 
     } catch (IOException e) {
-      LOGGER.log(Level.WARNING,"Unable to report to Wavefront", e);
+      logger.log(Level.WARNING,"Unable to report to Wavefront", e);
       try {
         wavefrontSender.close();
       } catch (IOException e1) {
-        LOGGER.log(Level.WARNING, "Error closing Wavefront", e1);
+        logger.log(Level.WARNING, "Error closing Wavefront", e1);
       }
     }
   }
@@ -312,9 +310,18 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
       try {
         wavefrontSender.close();
       } catch (IOException e) {
-        LOGGER.log(Level.WARNING, "Error disconnecting from Wavefront", e);
+        logger.log(Level.WARNING, "Error disconnecting from Wavefront", e);
       }
     }
+  }
+
+  /**
+   * Get total failure count reported by this reporter
+   *
+   * @return total failure count
+   */
+  public int getFailureCount() {
+    return wavefrontSender.getFailureCount();
   }
 
   private void reportTimer(String name, Timer timer) throws IOException {
