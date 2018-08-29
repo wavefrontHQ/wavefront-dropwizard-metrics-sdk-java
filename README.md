@@ -13,7 +13,7 @@ If you are using Maven, add following maven dependency to your pom.xml
 ```
 
 ### Construct DropwizardMetricsReporter.Builder
-```
+```java
   MetricRegistry metricRegistry = new MetricRegistry();
   DropwizardMetricsReporter.Builder builder = DropwizardMetricsReporter.forRegistry(metricRegistry);
 
@@ -66,7 +66,7 @@ Refer to this page (https://github.com/wavefrontHQ/wavefront-java-sdk/blob/maste
 to instantiate WavefrontProxyClient or WavefrontDirectIngestionClient.
 
 ### Option 1 - Report Dropwizard metrics and histograms to Wavefront via Proxy
-```
+```java
   /*
    * Using the 
    * 1) DropwizardMetricsReporter.Builder constructed above, and
@@ -77,7 +77,7 @@ to instantiate WavefrontProxyClient or WavefrontDirectIngestionClient.
 ```
 
 ### Option 2 - Report Dropwizard metrics and histograms to Wavefront via Direct Ingestion
-```
+```java
   /*
    * Using the 
    * 1) DropwizardMetricsReporter.Builder constructed above, and
@@ -89,16 +89,19 @@ to instantiate WavefrontProxyClient or WavefrontDirectIngestionClient.
 
 ### Starting and stopping the reporter
 
-``` 
+```java
   /* Report metrics and histograms to Wavefront every 30 seconds */
   dropwizardMetricsReporter.start(30, TimeUnit.SECONDS);
   
+  /*  To get failures observed while reporting */
+  int totalFailures = dropwizardMetricsReporter.getFailureCount();
+
   /* Before shutdown of your JVM app, don't forget to stop the reporter */
   dropwizardMetricsReporter.stop();
 ```
 
 ### Dropwizard entities that you can report to Wavefront
-```
+```java
   /* A raw counter that will be reported as it begins with prefix 'my*' */
   Counter counter = metricRegistry.counter("myCounter");
   
