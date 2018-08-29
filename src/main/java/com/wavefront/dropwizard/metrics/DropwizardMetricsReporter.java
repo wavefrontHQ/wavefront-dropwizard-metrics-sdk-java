@@ -21,10 +21,8 @@ import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
 import com.codahale.metrics.jvm.SafeFileDescriptorRatioGauge;
 import com.codahale.metrics.jvm.ThreadStatesGaugeSet;
 import com.wavefront.sdk.common.WavefrontSender;
-import com.wavefront.sdk.direct_ingestion.WavefrontDirectIngestionClient;
 import com.wavefront.sdk.entities.histograms.HistogramGranularity;
 import com.wavefront.sdk.entities.histograms.WavefrontHistogramImpl;
-import com.wavefront.sdk.proxy.WavefrontProxyClient;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
@@ -302,6 +300,15 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
         LOGGER.log(Level.WARNING, "Error closing Wavefront", e1);
       }
     }
+  }
+
+  /**
+   * Get total failure count reported by this reporter
+   *
+   * @return total failure count
+   */
+  public int getFailureCount() {
+    return wavefrontSender.getFailureCount();
   }
 
   @Override
