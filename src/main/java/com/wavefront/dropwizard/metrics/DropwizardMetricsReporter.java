@@ -269,7 +269,7 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
     try {
       registry.register(name, metric);
     } catch (IllegalArgumentException e) {
-      logger.log(Level.INFO, "Metric with the same name already exists", e);
+      logger.log(Level.INFO, e.getMessage());
     }
   }
 
