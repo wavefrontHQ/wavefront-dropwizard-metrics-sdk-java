@@ -7,6 +7,7 @@ import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.Metered;
+import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricAttribute;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
@@ -250,16 +251,25 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
     this.histogramGranularities = histogramGranularities;
 
     if (includeJvmMetrics) {
-      registry.register("jvm.uptime",
+      tryRegister(registry, "jvm.uptime",
           (Gauge<Long>) () -> ManagementFactory.getRuntimeMXBean().getUptime());
-      registry.register("jvm.current_time", (Gauge<Long>) clock::getTime);
-      registry.register("jvm.classes", new ClassLoadingGaugeSet());
-      registry.register("jvm.fd_usage", new FileDescriptorRatioGauge());
-      registry.register("jvm.buffers",
+      tryRegister(registry, "jvm.current_time", (Gauge<Long>) clock::getTime);
+      tryRegister(registry, "jvm.classes", new ClassLoadingGaugeSet());
+      tryRegister(registry, "jvm.fd_usage", new FileDescriptorRatioGauge());
+      tryRegister(registry, "jvm.buffers",
           new BufferPoolMetricSet(ManagementFactory.getPlatformMBeanServer()));
-      registry.register("jvm.gc", new GarbageCollectorMetricSet());
-      registry.register("jvm.memory", new MemoryUsageGaugeSet());
-      registry.register("jvm.thread-states", new ThreadStatesGaugeSet());
+      tryRegister(registry, "jvm.gc", new GarbageCollectorMetricSet());
+      tryRegister(registry, "jvm.memory", new MemoryUsageGaugeSet());
+      tryRegister(registry, "jvm.thread-states", new ThreadStatesGaugeSet());
+    }
+  }
+
+  private <T extends Metric> void tryRegister(MetricRegistry registry, String name, T metric) {
+    // Dropwizard services automatically include JVM metrics, so adding them again would throw an exception
+    try {
+      registry.register(name, metric);
+    } catch (IllegalArgumentException e) {
+      logger.log(Level.INFO, "Metric with the same name already exists", e);
     }
   }
 
