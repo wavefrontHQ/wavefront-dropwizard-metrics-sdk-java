@@ -16,9 +16,9 @@ import com.codahale.metrics.Timer;
 import com.codahale.metrics.WavefrontHistogram;
 import com.codahale.metrics.jvm.BufferPoolMetricSet;
 import com.codahale.metrics.jvm.ClassLoadingGaugeSet;
+import com.codahale.metrics.jvm.FileDescriptorRatioGauge;
 import com.codahale.metrics.jvm.GarbageCollectorMetricSet;
 import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
-import com.codahale.metrics.jvm.SafeFileDescriptorRatioGauge;
 import com.codahale.metrics.jvm.ThreadStatesGaugeSet;
 import com.wavefront.sdk.common.WavefrontSender;
 import com.wavefront.sdk.entities.histograms.HistogramGranularity;
@@ -254,7 +254,7 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
           (Gauge<Long>) () -> ManagementFactory.getRuntimeMXBean().getUptime());
       registry.register("jvm.current_time", (Gauge<Long>) clock::getTime);
       registry.register("jvm.classes", new ClassLoadingGaugeSet());
-      registry.register("jvm.fd_usage", new SafeFileDescriptorRatioGauge());
+      registry.register("jvm.fd_usage", new FileDescriptorRatioGauge());
       registry.register("jvm.buffers",
           new BufferPoolMetricSet(ManagementFactory.getPlatformMBeanServer()));
       registry.register("jvm.gc", new GarbageCollectorMetricSet());
