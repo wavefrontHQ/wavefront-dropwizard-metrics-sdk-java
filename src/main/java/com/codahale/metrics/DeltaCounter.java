@@ -32,7 +32,8 @@ public class DeltaCounter extends Counter {
       if (existing instanceof DeltaCounter) {
         return (DeltaCounter) existing;
       } else {
-        throw new IllegalStateException("Found existing non-DeltaCounter: " + existing);
+        throw new IllegalStateException("Existing metric of type: Counter found registered to " +
+            "metricName: " + metricName);
       }
     }
   }
