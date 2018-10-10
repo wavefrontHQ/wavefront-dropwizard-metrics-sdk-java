@@ -40,7 +40,8 @@ public class WavefrontHistogram extends Histogram implements Metric {
       if (existing instanceof WavefrontHistogram) {
         return (WavefrontHistogram) existing;
       } else {
-        throw new IllegalStateException("Found non-WavefrontHistogram: " + existing);
+        throw new IllegalStateException("Existing metric of type: Histogram found registered to " +
+            "metricName: " + metricName);
       }
     }
   }
