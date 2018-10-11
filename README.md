@@ -1,4 +1,4 @@
-# Wavefront Dropwizard Metrics Reporter [![travis build status](https://travis-ci.com/wavefrontHQ/wavefront-dropwizard-metrics.svg?branch=master)](https://travis-ci.com/wavefrontHQ/wavefront-dropwizard-metrics)
+# Wavefront Dropwizard Metrics Reporter [![travis build status](https://travis-ci.com/wavefrontHQ/wavefront-dropwizard-metrics-sdk-java.svg?branch=master)](https://travis-ci.com/wavefrontHQ/wavefront-dropwizard-metrics-sdk-java)
 
 This library provides support for reporting Dropwizard metrics and histograms to Wavefront via proxy or direct ingestion.
 
