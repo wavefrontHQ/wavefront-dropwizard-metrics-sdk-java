@@ -62,7 +62,7 @@ If you are using Maven, add following maven dependency to your pom.xml
 ### WavefrontSender
 We need to instantiate WavefrontSender 
 (i.e. either WavefrontProxyClient or WavefrontDirectIngestionClient)
-Refer to this page (https://github.com/wavefrontHQ/wavefront-java-sdk/blob/master/README.md)
+Refer to this page (https://github.com/wavefrontHQ/wavefront-sdk-java#wavefrontsender)
 to instantiate WavefrontProxyClient or WavefrontDirectIngestionClient.
 
 ### Option 1 - Report Dropwizard metrics and histograms to Wavefront via Proxy
