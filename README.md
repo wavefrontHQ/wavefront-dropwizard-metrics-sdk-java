@@ -7,8 +7,8 @@ If you are using Maven, add following maven dependency to your pom.xml
 ```
 <dependency>
     <groupId>com.wavefront</groupId>
-    <artifactId>dropwizard-metrics-sdk</artifactId>
-    <version>0.9.0</version>
+    <artifactId>wavefront-dropwizard-metrics-sdk-java</artifactId>
+    <version>$releaseVersion</version>
 </dependency>
 ```
 
@@ -60,7 +60,7 @@ If you are using Maven, add following maven dependency to your pom.xml
 ```
 
 ### WavefrontSender
-We need to instantiate WavefrontSender 
+We need to instantiate WavefrontSender
 (i.e. either WavefrontProxyClient or WavefrontDirectIngestionClient)
 Refer to this page (https://github.com/wavefrontHQ/wavefront-sdk-java#wavefrontsender)
 to instantiate WavefrontProxyClient or WavefrontDirectIngestionClient.
@@ -68,7 +68,7 @@ to instantiate WavefrontProxyClient or WavefrontDirectIngestionClient.
 ### Option 1 - Report Dropwizard metrics and histograms to Wavefront via Proxy
 ```java
   /*
-   * Using the 
+   * Using the
    * 1) DropwizardMetricsReporter.Builder constructed above, and
    * 2) wavefrontProxyClient instantiated using above instructions
    * report metrics and histograms to Wavefront via proxy
@@ -79,7 +79,7 @@ to instantiate WavefrontProxyClient or WavefrontDirectIngestionClient.
 ### Option 2 - Report Dropwizard metrics and histograms to Wavefront via Direct Ingestion
 ```java
   /*
-   * Using the 
+   * Using the
    * 1) DropwizardMetricsReporter.Builder constructed above, and
    * 2) wavefrontDirectIngestionClient instantiated using above instructions
    * report metrics and histograms to Wavefront via direct ingestion
@@ -104,27 +104,26 @@ to instantiate WavefrontProxyClient or WavefrontDirectIngestionClient.
 ```java
   /* A raw counter that will be reported as it begins with prefix 'my*' */
   Counter counter = metricRegistry.counter("myCounter");
-  
+
   /* 'notMyCounter' won't be reported as it does not begin with prefix - 'my*'  */
   Counter notReported = metricRegistry.counter("notMyCounter");
-  
+
   /* Wavefront Delta Counter */
   DeltaCounter deltaCounter = DeltaCounter.get(metricRegistry, "myDeltaCounter");
-  
+
   /* Gauge */
   AtomicInteger bufferSize = new AtomicInteger();
   Gauge gauge = metricRegistry.register("myGauge", () -> bufferSize.get());
-    
+
   /* Meter */
   Meter meter = metricRegistry.meter("myMeter");
-    
+
   /* Timer */
   Timer timer = metricRegistry.timer("myTimer");
-  
+
   /* Default Dropwizard Histogram */
   Histogram dropwizardHistogram = metricRegistry.histogram("myDropwizardHistogram");
-  
+
   /* WavefrontHistogram */
   WavefrontHistogram wavefrontHistogram = WavefrontHistogram.get(metricRegistry, "myWavefrontHistogram");
 ```
-
