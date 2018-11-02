@@ -85,8 +85,8 @@
     <dependencies>
         <dependency>
             <groupId>com.wavefront</groupId>
-            <artifactId>java-sdk</artifactId>
-            <version>0.9.0</version>
+            <artifactId>wavefront-sdk-java</artifactId>
+            <version>1.0</version>
         </dependency>
         <dependency>
             <groupId>io.dropwizard.metrics</groupId>
