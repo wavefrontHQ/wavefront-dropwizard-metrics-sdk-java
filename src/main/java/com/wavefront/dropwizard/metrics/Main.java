@@ -11,7 +11,7 @@ import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.WavefrontHistogram;
-import com.wavefront.sdk.direct_ingestion.WavefrontDirectIngestionClient;
+import com.wavefront.sdk.direct.ingestion.WavefrontDirectIngestionClient;
 import com.wavefront.sdk.proxy.WavefrontProxyClient;
 
 import java.io.IOException;
