@@ -24,7 +24,7 @@ To create a `DropwizardMetricsReporter`:
 
 The sections below detail each of the above steps.
 
-### Create DropwizardMetricsReporter.Builder
+### 1. Create DropwizardMetricsReporter.Builder
 ```java
 MetricRegistry metricRegistry = new MetricRegistry();
 
@@ -80,10 +80,10 @@ builder.disabledMetricAttributes(ImmutableSet.<MetricAttribute>builder().
     build());
 ```
 
-### Set up a WavefrontSender
+### 2. Set up a WavefrontSender
 You can choose to send data to Wavefront using either the [Wavefront proxy](https://docs.wavefront.com/proxies.html) or [direct ingestion](https://docs.wavefront.com/direct_ingestion.html). See the [Wavefront sender documentation](https://github.com/wavefrontHQ/wavefront-sdk-java#set-up-a-wavefrontsender) for details on instantiating a proxy or direct ingestion client.
 
-### Create a DropwizardMetricsReporter
+### 3. Create a DropwizardMetricsReporter
 Once you have a Wavefront sender, create the `DropwizardMetricsReporter`:
 
 ```java
