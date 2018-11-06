@@ -34,9 +34,6 @@ DropwizardMetricsReporter.Builder builder = DropwizardMetricsReporter.forRegistr
 // Set a relevant source for your metrics and histograms
 builder.withSource("mySource");
 
-// Invoke this method to report your metrics and histograms with the given prefix
-builder.prefixedWith("myPrefix");
-
 // Set reporter level point tags for your metrics and histograms
 // These point tags are sent with every metric and histogram reported to Wavefront
 builder.withReporterPointTags(ImmutableMap.<String, String>builder().
@@ -46,16 +43,31 @@ builder.withReporterPointTags(ImmutableMap.<String, String>builder().
 // Add specific reporter level point tag key-value for your metrics and histograms
 builder.withReporterPointTag("cluster", "us-west");
 
-// Invoke this method if you want to report JVM metrics for your Java app
+/**
+ * Optional: You can choose to add ApplicationTags which will be propagated 
+ * as first class tags along with the reported metric. 
+ * You encapsulate application tags in an `ApplicationTags` object.
+ * See https://github.com/wavefrontHQ/wavefront-sdk-java/blob/master/docs/apptags.md for details.
+ */
+builder.withApplicationTags(new ApplicationTags.Builder("OrderingApp", "Inventory").
+        cluster("us-west-1").shard("primary").
+        customTags(new HashMap<String, String>(){{
+          put("env", "Staging");
+          put("location", "SF"); }}).build());
+
+// Optional: Invoke this method to report your metrics and histograms with the given prefix
+builder.prefixedWith("myPrefix");
+
+// Optional: Invoke this method if you want to report JVM metrics for your Java app
 builder.withJvmMetrics();
 
-// Invoke this method if you want to report minute bin Wavefront histograms
+// Optional: Invoke this method if you want to report minute bin Wavefront histograms
 builder.reportMinuteDistribution();
 
-// Invoke this method if you want to report hour bin Wavefront histograms
+// Optional: Invoke this method if you want to report hour bin Wavefront histograms
 builder.reportHourDistribution();
 
-// Invoke this method if you want to report day bin Wavefront histograms
+// Optional: Invoke this method if you want to report day bin Wavefront histograms
 builder.reportDayDistribution();
 ```
 Remember to replace the source and prefix with relevant values. See the advanced section below for more builder options.
@@ -107,7 +119,7 @@ dropwizardMetricsReporter.stop();
 
 ## Dropwizard entities that you can report to Wavefront
 The [Dropwizard metrics](https://metrics.dropwizard.io) library supports various [metric types](https://metrics.dropwizard.io/4.0.0/manual/core.html). This SDK additionally provides a
-`DeltaCounter` and a `WavefrontHistogram`.
+[`DeltaCounter`](https://docs.wavefront.com/delta_counters.html) and a [`WavefrontHistogram`](https://docs.wavefront.com/proxies_histograms.html).
 
 Once you have created/started the reporter, metrics/histograms you create are automatically reported to Wavefront:
 
@@ -137,3 +149,4 @@ Histogram dropwizardHistogram = metricRegistry.histogram("myDropwizardHistogram"
 // WavefrontHistogram
 WavefrontHistogram wavefrontHistogram = WavefrontHistogram.get(metricRegistry, "myWavefrontHistogram");
 ```
+
