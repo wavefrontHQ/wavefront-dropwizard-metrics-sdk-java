@@ -11,6 +11,7 @@ import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.WavefrontHistogram;
+import com.wavefront.sdk.common.application.ApplicationTags;
 import com.wavefront.sdk.direct.ingestion.WavefrontDirectIngestionClient;
 import com.wavefront.sdk.proxy.WavefrontProxyClient;
 
@@ -64,6 +65,13 @@ public class Main {
         return System.currentTimeMillis();
       }
     });
+
+    /* Optional: Set ApplicationTags to propagate application metadata to the reported metrics */
+    builder.withApplicationTags(new ApplicationTags.Builder("OrderingApp", "Inventory").
+        cluster("us-west-1").shard("primary").
+        customTags(new HashMap<String, String>(){{
+          put("env", "Staging");
+          put("location", "SF"); }}).build());
 
     /* Set reporter level point tags map for your metrics and histograms */
     builder.withReporterPointTags(new HashMap<String, String>() {{
