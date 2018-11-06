@@ -1,4 +1,4 @@
-# Wavefront Dropwizard Metrics Reporter [![travis build status](https://travis-ci.com/wavefrontHQ/wavefront-dropwizard-metrics-sdk-java.svg?branch=master)](https://travis-ci.com/wavefrontHQ/wavefront-dropwizard-metrics-sdk-java)
+# Wavefront Dropwizard Metrics Reporter [![build status][ci-img]][ci] [![Released Version][maven-img]][maven]
 
 This library supports reporting [Dropwizard metrics and histograms](https://metrics.dropwizard.io) to Wavefront.
 
@@ -11,7 +11,7 @@ If you are using Maven, add the following maven dependency to your pom.xml:
     <version>$releaseVersion</version>
 </dependency>
 ```
-Replace `$releaseVersion` with the latest version available on maven-central.
+Replace `$releaseVersion` with the latest version available on [maven](http://search.maven.org/#search%7Cga%7C1%7Cwavefront-dropwizard-metrics-sdk-java).
 
 ## DropwizardMetricsReporter
 
@@ -44,8 +44,8 @@ builder.withReporterPointTags(ImmutableMap.<String, String>builder().
 builder.withReporterPointTag("cluster", "us-west");
 
 /**
- * Optional: You can choose to add ApplicationTags which will be propagated 
- * as first class tags along with the reported metric. 
+ * Optional: You can choose to add ApplicationTags which will be propagated
+ * as first class tags along with the reported metric.
  * You encapsulate application tags in an `ApplicationTags` object.
  * See https://github.com/wavefrontHQ/wavefront-sdk-java/blob/master/docs/apptags.md for details.
  */
@@ -150,3 +150,7 @@ Histogram dropwizardHistogram = metricRegistry.histogram("myDropwizardHistogram"
 WavefrontHistogram wavefrontHistogram = WavefrontHistogram.get(metricRegistry, "myWavefrontHistogram");
 ```
 
+[ci-img]: https://travis-ci.com/wavefrontHQ/wavefront-dropwizard-metrics-sdk-java.svg?branch=master
+[ci]: https://travis-ci.com/wavefrontHQ/wavefront-dropwizard-metrics-sdk-java
+[maven-img]: https://img.shields.io/maven-central/v/com.wavefront/wavefront-dropwizard-metrics-sdk-java.svg?maxAge=2592000
+[maven]: http://search.maven.org/#search%7Cga%7C1%7Cwavefront-dropwizard-metrics-sdk-java
