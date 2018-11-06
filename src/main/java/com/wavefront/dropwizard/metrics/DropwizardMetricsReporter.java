@@ -21,7 +21,9 @@ import com.codahale.metrics.jvm.FileDescriptorRatioGauge;
 import com.codahale.metrics.jvm.GarbageCollectorMetricSet;
 import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
 import com.codahale.metrics.jvm.ThreadStatesGaugeSet;
+import com.wavefront.sdk.common.Constants;
 import com.wavefront.sdk.common.WavefrontSender;
+import com.wavefront.sdk.common.application.ApplicationTags;
 import com.wavefront.sdk.entities.histograms.HistogramGranularity;
 import com.wavefront.sdk.entities.histograms.WavefrontHistogramImpl;
 
@@ -39,7 +41,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
+import static com.wavefront.sdk.common.Constants.APPLICATION_TAG_KEY;
+import static com.wavefront.sdk.common.Constants.CLUSTER_TAG_KEY;
 import static com.wavefront.sdk.common.Constants.DELTA_PREFIX;
+import static com.wavefront.sdk.common.Constants.NULL_TAG_VAL;
+import static com.wavefront.sdk.common.Constants.SERVICE_TAG_KEY;
+import static com.wavefront.sdk.common.Constants.SHARD_TAG_KEY;
 
 /**
  * A reporter which publishes metric values to a Wavefront cluster via proxy or direct ingestion
@@ -120,6 +127,25 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
      */
     public Builder withSource(String source) {
       this.source = source;
+      return this;
+    }
+
+    /**
+     * Add application tags to reporterPointTags.
+     *
+     * @param applicationTags application metadata.
+     * @return {@code this}
+     */
+    public Builder withApplicationTags(ApplicationTags applicationTags) {
+      this.reporterPointTags.put(APPLICATION_TAG_KEY, applicationTags.getApplication());
+      this.reporterPointTags.put(SERVICE_TAG_KEY, applicationTags.getService());
+      this.reporterPointTags.put(CLUSTER_TAG_KEY,
+          applicationTags.getCluster() == null ? NULL_TAG_VAL : applicationTags.getCluster());
+      this.reporterPointTags.put(SHARD_TAG_KEY,
+          applicationTags.getShard() == null ? NULL_TAG_VAL : applicationTags.getShard());
+      if (applicationTags.getCustomTags() != null) {
+        this.reporterPointTags.putAll(applicationTags.getCustomTags());
+      }
       return this;
     }
 
