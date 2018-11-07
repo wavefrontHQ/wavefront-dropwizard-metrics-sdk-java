@@ -1,4 +1,4 @@
-# Wavefront Dropwizard Metrics Reporter [![build status][ci-img]][ci] [![Released Version][maven-img]][maven]
+# Wavefront Dropwizard Metrics SDK [![build status][ci-img]][ci] [![Released Version][maven-img]][maven]
 
 The Wavefront by VMware Dropwizard Metrics SDK for Java is a library that supports reporting [Dropwizard metrics and histograms](https://metrics.dropwizard.io) to Wavefront.
 
