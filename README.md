@@ -39,28 +39,21 @@ DropwizardMetricsReporter.Builder builder = DropwizardMetricsReporter.forRegistr
 
 ### 2. Configure the DropwizardMetricsReporter
 
-You can use the `DropwizardMetricsReporter` builder to specify various properties.
+You can use the `DropwizardMetricsReporter` builder to specify various optional properties.
 
 #### Basic Properties
 
 ```java
-// Set a nondefault source for your metrics and histograms.
-// Omit this statement to use the host name.
+// Optional: Set a nondefault source for your metrics and histograms.
+// Defaults to hostname if omitted
 builder.withSource("mySource");
 
-// Add a map of reporter-level point tags for your metrics and histograms.
-// These point tags are sent with every metric and histogram reported to Wavefront.
-builder.withReporterPointTags(ImmutableMap.<String, String>builder().
-        put("env", "Staging").   // Example - replace values!
-        put("location", "SF").   // Example - replace values!
-        build());
-
-// Add an individual reporter-level point tag key-value for your metrics and histograms
-// This point tag is sent with every metric and histogram reported to Wavefront.
-builder.withReporterPointTag("cluster", "us-west");  // Example - replace values!
+// Add individual reporter-level point tags for your metrics and histograms
+// The point tags are sent with every metric and histogram reported to Wavefront.
+builder.withReporterPointTag("env", "staging");  // Example - replace values!
+builder.withReporterPointTag("location", "SF");  // Example - replace values!
 
 // Optional: Add application tags, which are propagated as point tags with the reported metric.
-// You encapsulate application tags in an ApplicationTags object.
 // See https://github.com/wavefrontHQ/wavefront-sdk-java/blob/master/docs/apptags.md for details.
 builder.withApplicationTags(new ApplicationTags.Builder("OrderingApp", "Inventory").
        cluster("us-west-1").
@@ -142,7 +135,7 @@ dropwizardMetricsReporter.stop();
 ```
 
 ## Types of Data You Can Report to Wavefront
-The [Dropwizard metrics](https://metrics.dropwizard.io) library supports various [metric types](https://metrics.dropwizard.io/4.0.0/manual/core.html). This Wavefront SDK additionally provides a
+The Dropwizard metrics library supports various [metric types](https://metrics.dropwizard.io/4.0.0/manual/core.html). This Wavefront SDK additionally provides a
 [`DeltaCounter`](https://docs.wavefront.com/delta_counters.html) type and a [`WavefrontHistogram`](https://docs.wavefront.com/proxies_histograms.html) type.
 
 After you have created and started the `DropwizardMetricsReporter`, the metrics/histograms you create are automatically reported to Wavefront.
