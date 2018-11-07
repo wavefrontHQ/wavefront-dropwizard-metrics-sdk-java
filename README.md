@@ -1,6 +1,6 @@
 # Wavefront Dropwizard Metrics Reporter [![build status][ci-img]][ci] [![Released Version][maven-img]][maven]
 
-This library supports reporting [Dropwizard metrics and histograms](https://metrics.dropwizard.io) to Wavefront.
+The Wavefront by VMware Dropwizard Metrics SDK for Java is a library that supports reporting [Dropwizard metrics and histograms](https://metrics.dropwizard.io) to Wavefront.
 
 ## Maven
 If you are using Maven, add the following maven dependency to your pom.xml:
@@ -13,68 +13,78 @@ If you are using Maven, add the following maven dependency to your pom.xml:
 ```
 Replace `$releaseVersion` with the latest version available on [maven](http://search.maven.org/#search%7Cga%7C1%7Cwavefront-dropwizard-metrics-sdk-java).
 
-## DropwizardMetricsReporter
+## Set Up a DropwizardMetricsReporter
 
 This SDK provides a `DropwizardMetricsReporter` for reporting metrics and histograms to Wavefront.
 
-To create a `DropwizardMetricsReporter`:
-1. Create a `DropwizardMetricsReporter.Builder` instance
-2. Create a `WavefrontSender`: a low-level interface that handles sending data to Wavefront
-3. Finally create a `DropwizardMetricsReporter` using the builder
+The steps for creating a `DropwizardMetricsReporter` are:
+1. Create a `DropwizardMetricsReporter.Builder` instance.
+2. Optionally use the builder to configure the `DropwizardMetricsReporter`.
+3. Create a `WavefrontSender` for sending data to Wavefront.
+4. Use the builder to create a `DropwizardMetricsReporter` with the `WavefrontSender`.
 
-The sections below detail each of the above steps.
+For the details of each step, see the sections below.
 
-### 1. Create DropwizardMetricsReporter.Builder
+### 1. Create a Builder for a DropwizardMetricsReporter
+
+A `DropwizardMetricsReporter` object reports any metrics and histograms you register in a `MetricRegistry`. This step creates a builder that supports configuring the metrics reporter.
+
 ```java
+// Create a registry
 MetricRegistry metricRegistry = new MetricRegistry();
 
-// Create a builder instance
+// Create a builder instance for the registry
 DropwizardMetricsReporter.Builder builder = DropwizardMetricsReporter.forRegistry(metricRegistry);
+```
 
-// Set a relevant source for your metrics and histograms
+### 2. Configure the DropwizardMetricsReporter
+
+You can use the `DropwizardMetricsReporter` builder to specify various properties.
+
+#### Basic Properties
+
+```java
+// Set a nondefault source for your metrics and histograms.
+// Omit this statement to use the host name.
 builder.withSource("mySource");
 
-// Set reporter level point tags for your metrics and histograms
-// These point tags are sent with every metric and histogram reported to Wavefront
+// Add a map of reporter-level point tags for your metrics and histograms.
+// These point tags are sent with every metric and histogram reported to Wavefront.
 builder.withReporterPointTags(ImmutableMap.<String, String>builder().
-        put("env", "Staging").
-        put("location", "SF").build());
+        put("env", "Staging").   // Example - replace values!
+        put("location", "SF").   // Example - replace values!
+        build());
 
-// Add specific reporter level point tag key-value for your metrics and histograms
-builder.withReporterPointTag("cluster", "us-west");
+// Add an individual reporter-level point tag key-value for your metrics and histograms
+// This point tag is sent with every metric and histogram reported to Wavefront.
+builder.withReporterPointTag("cluster", "us-west");  // Example - replace values!
 
-/**
- * Optional: You can choose to add ApplicationTags which will be propagated
- * as first class tags along with the reported metric.
- * You encapsulate application tags in an `ApplicationTags` object.
- * See https://github.com/wavefrontHQ/wavefront-sdk-java/blob/master/docs/apptags.md for details.
- */
+// Optional: Add application tags, which are propagated as point tags with the reported metric.
+// You encapsulate application tags in an ApplicationTags object.
+// See https://github.com/wavefrontHQ/wavefront-sdk-java/blob/master/docs/apptags.md for details.
 builder.withApplicationTags(new ApplicationTags.Builder("OrderingApp", "Inventory").
-        cluster("us-west-1").shard("primary").
-        customTags(new HashMap<String, String>(){{
-          put("env", "Staging");
-          put("location", "SF"); }}).build());
+       cluster("us-west-1").
+       shard("primary").build());   // Example - replace values!
 
-// Optional: Invoke this method to report your metrics and histograms with the given prefix
-builder.prefixedWith("myPrefix");
+// Optional: Report your metrics and histograms with the specified prefix.
+builder.prefixedWith("myPrefix");   // Example - replace value!
 
-// Optional: Invoke this method if you want to report JVM metrics for your Java app
+// Optional: Report JVM metrics for your Java application.
 builder.withJvmMetrics();
 
-// Optional: Invoke this method if you want to report minute bin Wavefront histograms
+// Optional: Report minute bin Wavefront histograms.
 builder.reportMinuteDistribution();
 
-// Optional: Invoke this method if you want to report hour bin Wavefront histograms
+// Optional: Report hour bin Wavefront histograms.
 builder.reportHourDistribution();
 
-// Optional: Invoke this method if you want to report day bin Wavefront histograms
+// Optional: Report day bin Wavefront histograms.
 builder.reportDayDistribution();
 ```
-Remember to replace the source and prefix with relevant values. See the advanced section below for more builder options.
 
-#### Advanced Builder Options
+#### Advanced Properties
 ```java
-// Explicitly set the clock if you wish to override default behavior
+// Optional: Explicitly set the clock to override default behavior
 builder.withClock(new Clock() {
   @Override
   public long getTick() {
@@ -82,33 +92,47 @@ builder.withClock(new Clock() {
   }
 });
 
-// Set a filter to only report metrics that begin with 'my*'
+// Optional: Set a filter to report metrics only if they begin with 'my*'
 builder.filter(MetricFilter.startsWith("my"));
 
-// Don't report stddev and m15
+// Optional: Don't report stddev and m15
 builder.disabledMetricAttributes(ImmutableSet.<MetricAttribute>builder().
     add(MetricAttribute.STDDEV).
     add(MetricAttribute.M15_RATE).
     build());
 ```
 
-### 2. Set up a WavefrontSender
-You can choose to send data to Wavefront using either the [Wavefront proxy](https://docs.wavefront.com/proxies.html) or [direct ingestion](https://docs.wavefront.com/direct_ingestion.html). See the [Wavefront sender documentation](https://github.com/wavefrontHQ/wavefront-sdk-java#set-up-a-wavefrontsender) for details on instantiating a proxy or direct ingestion client.
+### 3. Set Up a WavefrontSender
 
-### 3. Create a DropwizardMetricsReporter
-Once you have a Wavefront sender, create the `DropwizardMetricsReporter`:
+A `WavefrontSender` object implements the low-level interface for sending data to Wavefront. You can choose to send data using either the [Wavefront proxy](https://docs.wavefront.com/proxies.html) or [direct ingestion](https://docs.wavefront.com/direct_ingestion.html).
+
+See [Set Up a WavefrontSender](https://github.com/wavefrontHQ/wavefront-sdk-java/blob/master/README.md#set-up-a-wavefrontsender) for details on instantiating a proxy or direct ingestion client.
+
+**Note:** If you are using multiple Wavefront Java SDKs, see [Sharing a WavefrontSender](https://github.com/wavefrontHQ/wavefront-sdk-java/blob/master/docs/sender.md) for information about sharing a single `WavefrontSender` instance across SDKs.
+
+
+### 4. Create a DropwizardMetricsReporter
+Use the configured builder to create the `DropwizardMetricsReporter`. You must specify the `WavefrontSender` object (see above).
 
 ```java
-// Using the DropwizardMetricsReporter.Builder and wavefrontSender constructed above
 // Create a DropwizardMetricsReporter instance
+WavefrontSender wavefrontSender = buildWavefrontSender(); // pseudocode
 DropwizardMetricsReporter dropwizardMetricsReporter = builder.build(wavefrontSender);
+```
+## Start the DropwizardMetricsReporter
 
-// Start the reporter to report metrics/histograms at regular interval (ex: 30s)
+You start the `DropwizardMetricsReporter` explicitly to start reporting any metrics or histograms you create. Reporting continues until you stop the `DropwizardMetricsReporter` (see below).
+
+The `DropwizardMetricsReporter` reports metrics/histograms at regular intervals. You specify the length of the reporting interval to control how often data is forwarded to the `WavefrontSender`. The reporting interval determines the timestamps on the data sent to Wavefront.
+
+```java
+// Start the reporter to report metrics/histograms at regular interval (example: 30s)
 dropwizardMetricsReporter.start(30, TimeUnit.SECONDS);
 ```
 
-#### Stopping the reporter
-Remember to stop the reporter before shutting down your application:
+## Stop the DropwizardMetricsReporter
+You must explicitly stop the `DropwizardMetricsReporter` before shutting down your application.
+
 ```java
 // Get total failure count reported by this reporter
 int totalFailures = dropwizardMetricsReporter.getFailureCount();
@@ -117,17 +141,19 @@ int totalFailures = dropwizardMetricsReporter.getFailureCount();
 dropwizardMetricsReporter.stop();
 ```
 
-## Dropwizard entities that you can report to Wavefront
-The [Dropwizard metrics](https://metrics.dropwizard.io) library supports various [metric types](https://metrics.dropwizard.io/4.0.0/manual/core.html). This SDK additionally provides a
-[`DeltaCounter`](https://docs.wavefront.com/delta_counters.html) and a [`WavefrontHistogram`](https://docs.wavefront.com/proxies_histograms.html).
+## Types of Data You Can Report to Wavefront
+The [Dropwizard metrics](https://metrics.dropwizard.io) library supports various [metric types](https://metrics.dropwizard.io/4.0.0/manual/core.html). This Wavefront SDK additionally provides a
+[`DeltaCounter`](https://docs.wavefront.com/delta_counters.html) type and a [`WavefrontHistogram`](https://docs.wavefront.com/proxies_histograms.html) type.
 
-Once you have created/started the reporter, metrics/histograms you create are automatically reported to Wavefront:
+After you have created and started the `DropwizardMetricsReporter`, the metrics/histograms you create are automatically reported to Wavefront.
 
 ```java
-// A raw counter that will be reported as it begins with prefix 'my*'
-Counter counter = metricRegistry.counter("myCounter");
+// Assume a DropwizardMetricsReporter that is configured with the filter shown in Advanced Properties, above.
 
-// 'notMyCounter' won't be reported as it does not begin with prefix - 'my*'
+// Raw Counters
+// Counter name begins with 'my*', so it's reported.
+Counter counter = metricRegistry.counter("myCounter");
+// Counter name does not begin with 'my*', so it's ignored.
 Counter notReported = metricRegistry.counter("notMyCounter");
 
 // Wavefront Delta Counter
