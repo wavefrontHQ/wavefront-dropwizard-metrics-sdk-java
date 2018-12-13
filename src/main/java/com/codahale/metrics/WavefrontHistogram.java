@@ -1,5 +1,6 @@
 package com.codahale.metrics;
 
+import com.wavefront.dropwizard.metrics.TaggedMetricName;
 import com.wavefront.sdk.entities.histograms.WavefrontHistogramImpl;
 
 import java.io.OutputStream;
@@ -22,8 +23,18 @@ public class WavefrontHistogram extends Histogram implements Metric {
     delegate = new WavefrontHistogramImpl(clockMillis);
   }
 
+  public static WavefrontHistogram get(MetricRegistry registry, TaggedMetricName taggedMetricName) {
+    return get(registry, taggedMetricName.encode());
+  }
+
   public static WavefrontHistogram get(MetricRegistry registry, String metricName) {
     return get(registry, metricName, System::currentTimeMillis);
+  }
+
+  public static WavefrontHistogram get(MetricRegistry registry,
+                                       TaggedMetricName taggedMetricName,
+                                       Supplier<Long> clock) {
+    return get(registry, taggedMetricName.encode(), clock);
   }
 
   public static WavefrontHistogram get(MetricRegistry registry,
@@ -58,6 +69,10 @@ public class WavefrontHistogram extends Histogram implements Metric {
 
   public void update(double value) {
     delegate.update(value);
+  }
+
+  public void bulkUpdate(List<Double> means, List<Integer> counts) {
+    delegate.bulkUpdate(means, counts);
   }
 
   @Override

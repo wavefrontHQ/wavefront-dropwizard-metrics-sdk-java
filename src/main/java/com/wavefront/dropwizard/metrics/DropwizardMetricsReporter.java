@@ -2,6 +2,8 @@ package com.wavefront.dropwizard.metrics;
 
 import com.codahale.metrics.Clock;
 import com.codahale.metrics.Counter;
+import com.codahale.metrics.CustomTimeUnitMeter;
+import com.codahale.metrics.CustomTimeUnitTimer;
 import com.codahale.metrics.DeltaCounter;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
@@ -21,7 +23,6 @@ import com.codahale.metrics.jvm.FileDescriptorRatioGauge;
 import com.codahale.metrics.jvm.GarbageCollectorMetricSet;
 import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
 import com.codahale.metrics.jvm.ThreadStatesGaugeSet;
-import com.wavefront.sdk.common.Constants;
 import com.wavefront.sdk.common.WavefrontSender;
 import com.wavefront.sdk.common.application.ApplicationTags;
 import com.wavefront.sdk.entities.histograms.HistogramGranularity;
@@ -29,6 +30,7 @@ import com.wavefront.sdk.entities.histograms.WavefrontHistogramImpl;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -40,7 +42,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import static com.wavefront.dropwizard.metrics.TaggedMetricName.decode;
 import static com.wavefront.sdk.common.Constants.APPLICATION_TAG_KEY;
 import static com.wavefront.sdk.common.Constants.CLUSTER_TAG_KEY;
 import static com.wavefront.sdk.common.Constants.DELTA_PREFIX;
@@ -84,6 +89,10 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
     private boolean includeJvmMetrics;
     private Set<MetricAttribute> disabledMetricAttributes;
     private final Set<HistogramGranularity> histogramGranularities;
+    private boolean reportHistogramSum;
+    private MetricAttributeCodeMapper metricAttributeCodeMapper;
+    private boolean ignoreZeroCounters;
+    private boolean ignoreEmptyHistograms;
 
     private Builder(MetricRegistry registry) {
       this.registry = registry;
@@ -95,6 +104,10 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
       this.includeJvmMetrics = false;
       this.disabledMetricAttributes = Collections.emptySet();
       this.histogramGranularities = new HashSet<>();
+      this.reportHistogramSum = false;
+      this.metricAttributeCodeMapper = (metric, code) -> code;
+      this.ignoreZeroCounters = false;
+      this.ignoreEmptyHistograms = false;
     }
 
     /**
@@ -236,6 +249,46 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
     }
 
     /**
+     * Report a sum for each histogram distribution
+     *
+     * @return {@code this}
+     */
+    public Builder reportHistogramSum() {
+      this.reportHistogramSum = true;
+      return this;
+    }
+
+    /**
+     * Map metric names using the provided {@link MetricAttributeCodeMapper} for reporting.
+     *
+     * @return {@code this}
+     */
+    public Builder withMetricAttributeCodeMapper(MetricAttributeCodeMapper mapper) {
+      this.metricAttributeCodeMapper = mapper;
+      return this;
+    }
+
+    /**
+     * Do not report counters that have a value of zero.
+     *
+     * @return {@code this}
+     */
+    public Builder ignoreZeroCounters() {
+      this.ignoreZeroCounters = true;
+      return this;
+    }
+
+    /**
+     * Do not report empty histogram snapshots (except for a count).
+     *
+     * @return {@code this}
+     */
+    public Builder ignoreEmptyHistograms() {
+      this.ignoreEmptyHistograms = true;
+      return this;
+    }
+
+    /**
      * Builds a {@link DropwizardMetricsReporter} with the given properties, sending metrics and
      * histograms directly to a given Wavefront server using either proxy or direct ingestion APIs.
      *
@@ -245,8 +298,18 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
     public DropwizardMetricsReporter build(WavefrontSender wavefrontSender) {
       return new DropwizardMetricsReporter(registry, wavefrontSender, clock, prefix,
           source, reporterPointTags, filter, includeJvmMetrics,
-          disabledMetricAttributes, histogramGranularities);
+          disabledMetricAttributes, histogramGranularities, reportHistogramSum,
+          metricAttributeCodeMapper, ignoreZeroCounters, ignoreEmptyHistograms);
     }
+  }
+
+  /**
+   * Interface for mapping metrics and their metric attribute suffixes to custom metric names
+   * that are reported to Wavefront.
+   */
+  @FunctionalInterface
+  public interface MetricAttributeCodeMapper {
+    String map(Metric metric, String metricAttributeCode);
   }
 
   private final WavefrontSender wavefrontSender;
@@ -255,6 +318,10 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
   private final String source;
   private final Map<String, String> reporterPointTags;
   private final Set<HistogramGranularity> histogramGranularities;
+  private final boolean reportHistogramSum;
+  private final MetricAttributeCodeMapper metricAttributeCodeMapper;
+  private final boolean ignoreZeroCounters;
+  private final boolean ignoreEmptyHistograms;
 
   private DropwizardMetricsReporter(MetricRegistry registry,
                                     WavefrontSender wavefrontSender,
@@ -265,7 +332,11 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
                                     MetricFilter filter,
                                     boolean includeJvmMetrics,
                                     Set<MetricAttribute> disabledMetricAttributes,
-                                    Set<HistogramGranularity> histogramGranularities) {
+                                    Set<HistogramGranularity> histogramGranularities,
+                                    boolean reportHistogramSum,
+                                    MetricAttributeCodeMapper mapper,
+                                    boolean ignoreZeroCounters,
+                                    boolean ignoreEmptyHistograms) {
     super(registry, "wavefront-reporter", filter, TimeUnit.SECONDS, TimeUnit.MILLISECONDS,
         Executors.newSingleThreadScheduledExecutor(), true,
         disabledMetricAttributes == null ? Collections.emptySet() : disabledMetricAttributes);
@@ -275,6 +346,10 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
     this.source = source;
     this.reporterPointTags = reporterPointTags;
     this.histogramGranularities = histogramGranularities;
+    this.reportHistogramSum = reportHistogramSum;
+    this.metricAttributeCodeMapper = mapper == null ? (metric, code) -> code : mapper;
+    this.ignoreZeroCounters = ignoreZeroCounters;
+    this.ignoreEmptyHistograms = ignoreEmptyHistograms;
 
     if (includeJvmMetrics) {
       tryRegister(registry, "jvm.uptime",
@@ -361,78 +436,117 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
   }
 
   private void reportTimer(String name, Timer timer) throws IOException {
+    final TaggedMetricName taggedMetricName = decode(name);
+    final Map<String, String> tags = aggregateTags(taggedMetricName.getTags());
     final Snapshot snapshot = timer.getSnapshot();
     final long time = clock.getTime() / 1000;
-    sendIfEnabled(MetricAttribute.MAX, name, convertDuration(snapshot.getMax()), time);
-    sendIfEnabled(MetricAttribute.MEAN, name, convertDuration(snapshot.getMean()), time);
-    sendIfEnabled(MetricAttribute.MIN, name, convertDuration(snapshot.getMin()), time);
-    sendIfEnabled(MetricAttribute.STDDEV, name, convertDuration(snapshot.getStdDev()), time);
-    sendIfEnabled(MetricAttribute.P50, name, convertDuration(snapshot.getMedian()), time);
-    sendIfEnabled(MetricAttribute.P75, name, convertDuration(snapshot.get75thPercentile()), time);
-    sendIfEnabled(MetricAttribute.P95, name, convertDuration(snapshot.get95thPercentile()), time);
-    sendIfEnabled(MetricAttribute.P98, name, convertDuration(snapshot.get98thPercentile()), time);
-    sendIfEnabled(MetricAttribute.P99, name, convertDuration(snapshot.get99thPercentile()), time);
-    sendIfEnabled(MetricAttribute.P999, name, convertDuration(snapshot.get999thPercentile()), time);
+    sendIfEnabled(timer, MetricAttribute.MAX, taggedMetricName, convertDuration(snapshot.getMax(), timer), time, tags);
+    sendIfEnabled(timer, MetricAttribute.MEAN, taggedMetricName, convertDuration(snapshot.getMean(), timer), time, tags);
+    sendIfEnabled(timer, MetricAttribute.MIN, taggedMetricName, convertDuration(snapshot.getMin(), timer), time, tags);
+    if (reportHistogramSum) {
+      final String code = metricAttributeCodeMapper.map(timer, "sum");
+      wavefrontSender.sendMetric(prefixAndSanitize(taggedMetricName.getGroup(),
+              taggedMetricName.getName(), code),
+              convertDuration(Arrays.stream(snapshot.getValues()).sum(), timer), time, source,
+              tags);
+    }
+    sendIfEnabled(timer, MetricAttribute.STDDEV, taggedMetricName, convertDuration(snapshot.getStdDev(), timer), time, tags);
+    sendIfEnabled(timer, MetricAttribute.P50, taggedMetricName, convertDuration(snapshot.getMedian(), timer), time, tags);
+    sendIfEnabled(timer, MetricAttribute.P75, taggedMetricName, convertDuration(snapshot.get75thPercentile(), timer), time, tags);
+    sendIfEnabled(timer, MetricAttribute.P95, taggedMetricName, convertDuration(snapshot.get95thPercentile(), timer), time, tags);
+    sendIfEnabled(timer, MetricAttribute.P98, taggedMetricName, convertDuration(snapshot.get98thPercentile(), timer), time, tags);
+    sendIfEnabled(timer, MetricAttribute.P99, taggedMetricName, convertDuration(snapshot.get99thPercentile(), timer), time, tags);
+    sendIfEnabled(timer, MetricAttribute.P999, taggedMetricName, convertDuration(snapshot.get999thPercentile(), timer), time, tags);
 
     reportMetered(name, timer);
   }
 
   private void reportMetered(String name, Metered meter) throws IOException {
+    final TaggedMetricName taggedMetricName = decode(name);
+    final Map<String, String> tags = aggregateTags(taggedMetricName.getTags());
     final long time = clock.getTime() / 1000;
-    sendIfEnabled(MetricAttribute.COUNT, name, meter.getCount(), time);
-    sendIfEnabled(MetricAttribute.M1_RATE, name, convertRate(meter.getOneMinuteRate()), time);
-    sendIfEnabled(MetricAttribute.M5_RATE, name, convertRate(meter.getFiveMinuteRate()), time);
-    sendIfEnabled(MetricAttribute.M15_RATE, name, convertRate(meter.getFifteenMinuteRate()), time);
-    sendIfEnabled(MetricAttribute.MEAN_RATE, name, convertRate(meter.getMeanRate()), time);
+    sendIfEnabled(meter, MetricAttribute.COUNT, taggedMetricName, meter.getCount(), time, tags);
+    sendIfEnabled(meter, MetricAttribute.M1_RATE, taggedMetricName, convertRate(meter.getOneMinuteRate(), meter), time, tags);
+    sendIfEnabled(meter, MetricAttribute.M5_RATE, taggedMetricName, convertRate(meter.getFiveMinuteRate(), meter), time, tags);
+    sendIfEnabled(meter, MetricAttribute.M15_RATE, taggedMetricName, convertRate(meter.getFifteenMinuteRate(), meter), time, tags);
+    sendIfEnabled(meter, MetricAttribute.MEAN_RATE, taggedMetricName, convertRate(meter.getMeanRate(), meter), time, tags);
   }
 
   private void reportHistogram(String name, Histogram histogram) throws IOException {
+    final TaggedMetricName taggedMetricName = decode(name);
+    final Map<String, String> tags = aggregateTags(taggedMetricName.getTags());
     if (histogram instanceof WavefrontHistogram) {
-      String histogramName = prefixAndSanitize(name);
+      String histogramName =
+              prefixAndSanitize(taggedMetricName.getGroup(), taggedMetricName.getName());
       for (WavefrontHistogramImpl.Distribution distribution :
           ((WavefrontHistogram) histogram).flushDistributions()) {
         wavefrontSender.sendDistribution(histogramName, distribution.centroids,
-            histogramGranularities, distribution.timestamp, source, reporterPointTags);
+            histogramGranularities, distribution.timestamp, source, tags);
       }
     } else {
       final Snapshot snapshot = histogram.getSnapshot();
+      final long count = histogram.getCount();
       final long time = clock.getTime() / 1000;
-      sendIfEnabled(MetricAttribute.COUNT, name, histogram.getCount(), time);
-      sendIfEnabled(MetricAttribute.MAX, name, snapshot.getMax(), time);
-      sendIfEnabled(MetricAttribute.MEAN, name, snapshot.getMean(), time);
-      sendIfEnabled(MetricAttribute.MIN, name, snapshot.getMin(), time);
-      sendIfEnabled(MetricAttribute.STDDEV, name, snapshot.getStdDev(), time);
-      sendIfEnabled(MetricAttribute.P50, name, snapshot.getMedian(), time);
-      sendIfEnabled(MetricAttribute.P75, name, snapshot.get75thPercentile(), time);
-      sendIfEnabled(MetricAttribute.P95, name, snapshot.get95thPercentile(), time);
-      sendIfEnabled(MetricAttribute.P98, name, snapshot.get98thPercentile(), time);
-      sendIfEnabled(MetricAttribute.P99, name, snapshot.get99thPercentile(), time);
-      sendIfEnabled(MetricAttribute.P999, name, snapshot.get999thPercentile(), time);
+      if (ignoreEmptyHistograms && count == 0) {
+        // send count still but skip the others.
+        sendIfEnabled(histogram, MetricAttribute.COUNT, taggedMetricName, count, time, tags);
+      } else {
+        sendIfEnabled(histogram, MetricAttribute.COUNT, taggedMetricName, count, time, tags);
+        sendIfEnabled(histogram, MetricAttribute.MAX, taggedMetricName, snapshot.getMax(), time, tags);
+        sendIfEnabled(histogram, MetricAttribute.MEAN, taggedMetricName, snapshot.getMean(), time, tags);
+        sendIfEnabled(histogram, MetricAttribute.MIN, taggedMetricName, snapshot.getMin(), time, tags);
+        if (reportHistogramSum) {
+          final String code = metricAttributeCodeMapper.map(histogram, "sum");
+          wavefrontSender.sendMetric(prefixAndSanitize(taggedMetricName.getGroup(),
+                  taggedMetricName.getName(), code), Arrays.stream(snapshot.getValues()).sum(), time,
+                  source, tags);
+        }
+        sendIfEnabled(histogram, MetricAttribute.STDDEV, taggedMetricName, snapshot.getStdDev(), time, tags);
+        sendIfEnabled(histogram, MetricAttribute.P50, taggedMetricName, snapshot.getMedian(), time, tags);
+        sendIfEnabled(histogram, MetricAttribute.P75, taggedMetricName, snapshot.get75thPercentile(), time, tags);
+        sendIfEnabled(histogram, MetricAttribute.P95, taggedMetricName, snapshot.get95thPercentile(), time, tags);
+        sendIfEnabled(histogram, MetricAttribute.P98, taggedMetricName, snapshot.get98thPercentile(), time, tags);
+        sendIfEnabled(histogram, MetricAttribute.P99, taggedMetricName, snapshot.get99thPercentile(), time, tags);
+        sendIfEnabled(histogram, MetricAttribute.P999, taggedMetricName, snapshot.get999thPercentile(), time, tags);
+      }
     }
   }
 
   private void reportCounter(String name, Counter counter) throws IOException {
+    final long count = counter.getCount();
+    if (ignoreZeroCounters && count == 0) return;
+
+    final TaggedMetricName taggedMetricName = decode(name);
+    final Map<String, String> tags = aggregateTags(taggedMetricName.getTags());
+    final String code = metricAttributeCodeMapper.map(counter, "count");
     if (counter instanceof DeltaCounter) {
-      long count = counter.getCount();
-      name = DELTA_PREFIX + prefixAndSanitize(name.substring(1), "count");
-      wavefrontSender.sendDeltaCounter(name, count, source, reporterPointTags);
+      name = DELTA_PREFIX + prefixAndSanitize(taggedMetricName.getGroup(),
+              taggedMetricName.getName().substring(1), code);
+      wavefrontSender.sendDeltaCounter(name, count, source, tags);
       counter.dec(count);
     } else {
-      wavefrontSender.sendMetric(prefixAndSanitize(name, "count"), counter.getCount(),
-          clock.getTime() / 1000, source, reporterPointTags);
+      name = prefixAndSanitize(taggedMetricName.getGroup(), taggedMetricName.getName(), code);
+      wavefrontSender.sendMetric(name, count, clock.getTime() / 1000, source, tags);
     }
   }
 
   private void reportGauge(String name, Gauge<Number> gauge) throws IOException {
-    wavefrontSender.sendMetric(prefixAndSanitize(name), gauge.getValue().doubleValue(),
-        clock.getTime() / 1000, source, reporterPointTags);
+    final TaggedMetricName taggedMetricName = decode(name);
+    final Map<String, String> tags = aggregateTags(taggedMetricName.getTags());
+    final String code = metricAttributeCodeMapper.map(gauge, "");
+    name = prefixAndSanitize(taggedMetricName.getGroup(), taggedMetricName.getName(), code);
+    wavefrontSender.sendMetric(name, gauge.getValue().doubleValue(), clock.getTime() / 1000,
+            source, tags);
   }
 
-  private void sendIfEnabled(MetricAttribute type, String name, double value, long timestamp)
+  private void sendIfEnabled(Metric metric, MetricAttribute type, TaggedMetricName taggedMetricName,
+                             double value, long timestamp, Map<String, String> tags)
       throws IOException {
     if (!getDisabledMetricAttributes().contains(type)) {
-      wavefrontSender.sendMetric(prefixAndSanitize(name, type.getCode()), value, timestamp,
-          source, reporterPointTags);
+      final String code = metricAttributeCodeMapper.map(metric, type.getCode());
+      final String name =
+              prefixAndSanitize(taggedMetricName.getGroup(), taggedMetricName.getName(), code);
+      wavefrontSender.sendMetric(name, value, timestamp, source, tags);
     }
   }
 
@@ -442,6 +556,29 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
 
   private static String sanitize(String name) {
     return SIMPLE_NAMES.matcher(name).replaceAll("_");
+  }
+
+  private Map<String, String> aggregateTags(Map<String, String> pointTags) {
+    return Stream.of(pointTags, reporterPointTags).flatMap(map -> map.entrySet().stream())
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (v1, v2) -> v2));
+  }
+
+  private double convertDuration(double duration, Timer timer) {
+    if (timer instanceof CustomTimeUnitTimer) {
+      return ((CustomTimeUnitTimer) timer).convertDuration(duration);
+    } else {
+      return convertDuration(duration);
+    }
+  }
+
+  private double convertRate(double rate, Metered meter) {
+    if (meter instanceof CustomTimeUnitMeter) {
+      return ((CustomTimeUnitMeter) meter).convertRate(rate);
+    } else if (meter instanceof CustomTimeUnitTimer) {
+      return ((CustomTimeUnitTimer) meter).convertRate(rate);
+    } else {
+      return convertRate(rate);
+    }
   }
 
   private static final Pattern SIMPLE_NAMES = Pattern.compile("[^a-zA-Z0-9_.\\-~]");

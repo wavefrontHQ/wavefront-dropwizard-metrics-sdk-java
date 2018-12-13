@@ -1,5 +1,6 @@
 package com.codahale.metrics;
 
+import com.wavefront.dropwizard.metrics.TaggedMetricName;
 import com.wavefront.sdk.common.Constants;
 
 /**
@@ -13,6 +14,11 @@ import com.wavefront.sdk.common.Constants;
 public class DeltaCounter extends Counter {
 
   private DeltaCounter() {
+  }
+
+  public static synchronized DeltaCounter get(MetricRegistry registry,
+                                              TaggedMetricName taggedMetricName) {
+    return get(registry, taggedMetricName.encode());
   }
 
   public static synchronized DeltaCounter get(MetricRegistry registry, String metricName) {
