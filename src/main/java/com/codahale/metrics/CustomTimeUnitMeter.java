@@ -5,7 +5,7 @@ import com.wavefront.dropwizard.metrics.TaggedMetricName;
 import java.util.concurrent.TimeUnit;
 
 /**
- * A {@link Meter} thta has its own {@link TimeUnit} for rate.
+ * A {@link Meter} that has its own {@link TimeUnit} for rate.
  *
  * @author Han Zhang (zhanghan@vmware.com).
  */
@@ -37,6 +37,12 @@ public class CustomTimeUnitMeter extends Meter {
         }
     }
 
+    /**
+     * Converts the rate value to a per-second rate value.
+     *
+     * @param rate  The value to convert.
+     * @return the per-second value.
+     */
     public double convertRate(double rate) {
         return rate * rateFactor;
     }

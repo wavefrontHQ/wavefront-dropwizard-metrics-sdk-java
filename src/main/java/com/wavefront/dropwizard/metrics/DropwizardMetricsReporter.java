@@ -3,7 +3,6 @@ package com.wavefront.dropwizard.metrics;
 import com.codahale.metrics.Clock;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.CustomTimeUnitMeter;
-import com.codahale.metrics.CustomTimeUnitTimer;
 import com.codahale.metrics.DeltaCounter;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
@@ -17,6 +16,8 @@ import com.codahale.metrics.ScheduledReporter;
 import com.codahale.metrics.Snapshot;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.WavefrontHistogram;
+import com.codahale.metrics.WavefrontSnapshot;
+import com.codahale.metrics.WavefrontTimer;
 import com.codahale.metrics.jvm.BufferPoolMetricSet;
 import com.codahale.metrics.jvm.ClassLoadingGaugeSet;
 import com.codahale.metrics.jvm.FileDescriptorRatioGauge;
@@ -438,17 +439,28 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
   private void reportTimer(String name, Timer timer) throws IOException {
     final TaggedMetricName taggedMetricName = decode(name);
     final Map<String, String> tags = aggregateTags(taggedMetricName.getTags());
-    final Snapshot snapshot = timer.getSnapshot();
+    Snapshot snapshot;
+    if (timer instanceof WavefrontTimer) {
+      // Flush WavefrontTimers so that no data gets reported more than once.
+      snapshot = ((WavefrontTimer) timer).flushSnapshot();
+    } else {
+      // Other timers do not have a way to clear historical data.
+      snapshot = timer.getSnapshot();
+    }
     final long time = clock.getTime() / 1000;
     sendIfEnabled(timer, MetricAttribute.MAX, taggedMetricName, convertDuration(snapshot.getMax(), timer), time, tags);
     sendIfEnabled(timer, MetricAttribute.MEAN, taggedMetricName, convertDuration(snapshot.getMean(), timer), time, tags);
     sendIfEnabled(timer, MetricAttribute.MIN, taggedMetricName, convertDuration(snapshot.getMin(), timer), time, tags);
     if (reportHistogramSum) {
       final String code = metricAttributeCodeMapper.map(timer, "sum");
+      double sum;
+      if (snapshot instanceof WavefrontSnapshot) {
+        sum = ((WavefrontSnapshot) snapshot).getSum();
+      } else {
+        sum = convertDuration(Arrays.stream(snapshot.getValues()).sum(), timer);
+      }
       wavefrontSender.sendMetric(prefixAndSanitize(taggedMetricName.getGroup(),
-              taggedMetricName.getName(), code),
-              convertDuration(Arrays.stream(snapshot.getValues()).sum(), timer), time, source,
-              tags);
+              taggedMetricName.getName(), code), sum, time, source, tags);
     }
     sendIfEnabled(timer, MetricAttribute.STDDEV, taggedMetricName, convertDuration(snapshot.getStdDev(), timer), time, tags);
     sendIfEnabled(timer, MetricAttribute.P50, taggedMetricName, convertDuration(snapshot.getMedian(), timer), time, tags);
@@ -475,7 +487,10 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
   private void reportHistogram(String name, Histogram histogram) throws IOException {
     final TaggedMetricName taggedMetricName = decode(name);
     final Map<String, String> tags = aggregateTags(taggedMetricName.getTags());
-    if (histogram instanceof WavefrontHistogram) {
+    if (histogram instanceof WavefrontHistogram &&
+            !((WavefrontHistogram) histogram).isReportingSnapshot()) {
+      // Report distributions for WavefrontHistograms, unless the histogram is configured
+      // to report snapshots instead.
       String histogramName =
               prefixAndSanitize(taggedMetricName.getGroup(), taggedMetricName.getName());
       for (WavefrontHistogramImpl.Distribution distribution :
@@ -484,11 +499,18 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
             histogramGranularities, distribution.timestamp, source, tags);
       }
     } else {
-      final Snapshot snapshot = histogram.getSnapshot();
+      Snapshot snapshot;
+      if (histogram instanceof WavefrontHistogram) {
+        // Flush WavefrontHistograms so that no data gets reported more than once.
+        snapshot = ((WavefrontHistogram) histogram).flushSnapshot();
+      } else {
+        // Other histograms do not have a way to clear historical data.
+        snapshot = histogram.getSnapshot();
+      }
       final long count = histogram.getCount();
       final long time = clock.getTime() / 1000;
       if (ignoreEmptyHistograms && count == 0) {
-        // send count still but skip the others.
+        // Send count still but skip the others.
         sendIfEnabled(histogram, MetricAttribute.COUNT, taggedMetricName, count, time, tags);
       } else {
         sendIfEnabled(histogram, MetricAttribute.COUNT, taggedMetricName, count, time, tags);
@@ -497,9 +519,14 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
         sendIfEnabled(histogram, MetricAttribute.MIN, taggedMetricName, snapshot.getMin(), time, tags);
         if (reportHistogramSum) {
           final String code = metricAttributeCodeMapper.map(histogram, "sum");
+          double sum;
+          if (snapshot instanceof WavefrontSnapshot) {
+            sum = ((WavefrontSnapshot) snapshot).getSum();
+          } else {
+            sum = Arrays.stream(snapshot.getValues()).sum();
+          }
           wavefrontSender.sendMetric(prefixAndSanitize(taggedMetricName.getGroup(),
-                  taggedMetricName.getName(), code), Arrays.stream(snapshot.getValues()).sum(), time,
-                  source, tags);
+                  taggedMetricName.getName(), code), sum, time, source, tags);
         }
         sendIfEnabled(histogram, MetricAttribute.STDDEV, taggedMetricName, snapshot.getStdDev(), time, tags);
         sendIfEnabled(histogram, MetricAttribute.P50, taggedMetricName, snapshot.getMedian(), time, tags);
@@ -564,8 +591,8 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
   }
 
   private double convertDuration(double duration, Timer timer) {
-    if (timer instanceof CustomTimeUnitTimer) {
-      return ((CustomTimeUnitTimer) timer).convertDuration(duration);
+    if (timer instanceof WavefrontTimer) {
+      return ((WavefrontTimer) timer).convertDuration(duration, convertDuration(duration));
     } else {
       return convertDuration(duration);
     }
@@ -574,8 +601,8 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
   private double convertRate(double rate, Metered meter) {
     if (meter instanceof CustomTimeUnitMeter) {
       return ((CustomTimeUnitMeter) meter).convertRate(rate);
-    } else if (meter instanceof CustomTimeUnitTimer) {
-      return ((CustomTimeUnitTimer) meter).convertRate(rate);
+    } else if (meter instanceof WavefrontTimer) {
+      return ((WavefrontTimer) meter).convertRate(rate, convertRate(rate));
     } else {
       return convertRate(rate);
     }
