@@ -285,11 +285,6 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
     this.source = source;
     this.reporterPointTags = reporterPointTags;
     this.histogramGranularities = histogramGranularities;
-    sdkMetricsRegistry = new WavefrontSdkMetricsRegistry.Builder(wavefrontSender).
-            prefix(SDK_METRIC_PREFIX + ".dropwizard_metrics.reporter").
-            source(source).
-            tags(reporterPointTags).
-            build();
 
     if (includeJvmMetrics) {
       tryRegister(registry, "jvm.uptime",
@@ -303,6 +298,12 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
       tryRegister(registry, "jvm.memory", new MemoryUsageGaugeSet());
       tryRegister(registry, "jvm.thread-states", new ThreadStatesGaugeSet());
     }
+
+    sdkMetricsRegistry = new WavefrontSdkMetricsRegistry.Builder(this.wavefrontSender).
+            prefix(SDK_METRIC_PREFIX + ".dropwizard_metrics.reporter").
+            source(this.source).
+            tags(this.reporterPointTags).
+            build();
 
     gaugesReported = sdkMetricsRegistry.newCounter("gauges.reported");
     countersReported = sdkMetricsRegistry.newCounter("counters.reported");
