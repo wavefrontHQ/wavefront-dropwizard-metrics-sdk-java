@@ -260,7 +260,9 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
   private final WavefrontSdkMetricsRegistry sdkMetricsRegistry;
 
   private final WavefrontSdkCounter gaugesReported;
+  private final WavefrontSdkCounter deltaCountersReported;
   private final WavefrontSdkCounter countersReported;
+  private final WavefrontSdkCounter wfHistogramsReported;
   private final WavefrontSdkCounter histogramsReported;
   private final WavefrontSdkCounter metersReported;
   private final WavefrontSdkCounter timersReported;
@@ -306,7 +308,9 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
             build();
 
     gaugesReported = sdkMetricsRegistry.newCounter("gauges.reported");
+    deltaCountersReported = sdkMetricsRegistry.newCounter("delta_counters.reported");
     countersReported = sdkMetricsRegistry.newCounter("counters.reported");
+    wfHistogramsReported = sdkMetricsRegistry.newCounter("wavefront_histograms.reported");
     histogramsReported = sdkMetricsRegistry.newCounter("histograms.reported");
     metersReported = sdkMetricsRegistry.newCounter("meters.reported");
     timersReported = sdkMetricsRegistry.newCounter("timers.reported");
@@ -338,12 +342,20 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
 
       for (Map.Entry<String, Counter> entry : counters.entrySet()) {
         reportCounter(entry.getKey(), entry.getValue());
-        countersReported.inc();
+        if (entry.getValue() instanceof DeltaCounter) {
+          deltaCountersReported.inc();
+        } else {
+          countersReported.inc();
+        }
       }
 
       for (Map.Entry<String, Histogram> entry : histograms.entrySet()) {
         reportHistogram(entry.getKey(), entry.getValue());
-        histogramsReported.inc();
+        if (entry.getValue() instanceof WavefrontHistogram) {
+          wfHistogramsReported.inc();
+        } else {
+          histogramsReported.inc();
+        }
       }
 
       for (Map.Entry<String, Meter> entry : meters.entrySet()) {
