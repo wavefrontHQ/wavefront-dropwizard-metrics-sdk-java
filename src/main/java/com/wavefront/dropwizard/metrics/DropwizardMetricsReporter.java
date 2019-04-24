@@ -21,9 +21,10 @@ import com.codahale.metrics.jvm.FileDescriptorRatioGauge;
 import com.codahale.metrics.jvm.GarbageCollectorMetricSet;
 import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
 import com.codahale.metrics.jvm.ThreadStatesGaugeSet;
-import com.wavefront.sdk.common.Constants;
 import com.wavefront.sdk.common.WavefrontSender;
 import com.wavefront.sdk.common.application.ApplicationTags;
+import com.wavefront.sdk.common.metrics.WavefrontSdkCounter;
+import com.wavefront.sdk.common.metrics.WavefrontSdkMetricsRegistry;
 import com.wavefront.sdk.entities.histograms.HistogramGranularity;
 import com.wavefront.sdk.entities.histograms.WavefrontHistogramImpl;
 
@@ -45,6 +46,7 @@ import static com.wavefront.sdk.common.Constants.APPLICATION_TAG_KEY;
 import static com.wavefront.sdk.common.Constants.CLUSTER_TAG_KEY;
 import static com.wavefront.sdk.common.Constants.DELTA_PREFIX;
 import static com.wavefront.sdk.common.Constants.NULL_TAG_VAL;
+import static com.wavefront.sdk.common.Constants.SDK_METRIC_PREFIX;
 import static com.wavefront.sdk.common.Constants.SERVICE_TAG_KEY;
 import static com.wavefront.sdk.common.Constants.SHARD_TAG_KEY;
 
@@ -255,6 +257,16 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
   private final String source;
   private final Map<String, String> reporterPointTags;
   private final Set<HistogramGranularity> histogramGranularities;
+  private final WavefrontSdkMetricsRegistry sdkMetricsRegistry;
+
+  private final WavefrontSdkCounter gaugesReported;
+  private final WavefrontSdkCounter deltaCountersReported;
+  private final WavefrontSdkCounter countersReported;
+  private final WavefrontSdkCounter wfHistogramsReported;
+  private final WavefrontSdkCounter histogramsReported;
+  private final WavefrontSdkCounter metersReported;
+  private final WavefrontSdkCounter timersReported;
+  private final WavefrontSdkCounter reportErrors;
 
   private DropwizardMetricsReporter(MetricRegistry registry,
                                     WavefrontSender wavefrontSender,
@@ -288,6 +300,21 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
       tryRegister(registry, "jvm.memory", new MemoryUsageGaugeSet());
       tryRegister(registry, "jvm.thread-states", new ThreadStatesGaugeSet());
     }
+
+    sdkMetricsRegistry = new WavefrontSdkMetricsRegistry.Builder(this.wavefrontSender).
+            prefix(SDK_METRIC_PREFIX + ".dropwizard_metrics.reporter").
+            source(this.source).
+            tags(this.reporterPointTags).
+            build();
+
+    gaugesReported = sdkMetricsRegistry.newCounter("gauges.reported");
+    deltaCountersReported = sdkMetricsRegistry.newCounter("delta_counters.reported");
+    countersReported = sdkMetricsRegistry.newCounter("counters.reported");
+    wfHistogramsReported = sdkMetricsRegistry.newCounter("wavefront_histograms.reported");
+    histogramsReported = sdkMetricsRegistry.newCounter("histograms.reported");
+    metersReported = sdkMetricsRegistry.newCounter("meters.reported");
+    timersReported = sdkMetricsRegistry.newCounter("timers.reported");
+    reportErrors = sdkMetricsRegistry.newCounter("errors");
   }
 
   private <T extends Metric> void tryRegister(MetricRegistry registry, String name, T metric) {
@@ -309,45 +336,41 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
       for (Map.Entry<String, Gauge> entry : gauges.entrySet()) {
         if (entry.getValue().getValue() instanceof Number) {
           reportGauge(entry.getKey(), entry.getValue());
+          gaugesReported.inc();
         }
       }
 
       for (Map.Entry<String, Counter> entry : counters.entrySet()) {
         reportCounter(entry.getKey(), entry.getValue());
+        if (entry.getValue() instanceof DeltaCounter) {
+          deltaCountersReported.inc();
+        } else {
+          countersReported.inc();
+        }
       }
 
       for (Map.Entry<String, Histogram> entry : histograms.entrySet()) {
         reportHistogram(entry.getKey(), entry.getValue());
+        if (entry.getValue() instanceof WavefrontHistogram) {
+          wfHistogramsReported.inc();
+        } else {
+          histogramsReported.inc();
+        }
       }
 
       for (Map.Entry<String, Meter> entry : meters.entrySet()) {
         reportMetered(entry.getKey(), entry.getValue());
+        metersReported.inc();
       }
 
       for (Map.Entry<String, Timer> entry : timers.entrySet()) {
         reportTimer(entry.getKey(), entry.getValue());
+        timersReported.inc();
       }
 
     } catch (IOException e) {
+      reportErrors.inc();
       logger.log(Level.WARNING,"Unable to report to Wavefront", e);
-      try {
-        wavefrontSender.close();
-      } catch (IOException e1) {
-        logger.log(Level.WARNING, "Error closing Wavefront", e1);
-      }
-    }
-  }
-
-  @Override
-  public void stop() {
-    try {
-      super.stop();
-    } finally {
-      try {
-        wavefrontSender.close();
-      } catch (IOException e) {
-        logger.log(Level.WARNING, "Error disconnecting from Wavefront", e);
-      }
     }
   }
 
