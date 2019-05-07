@@ -168,6 +168,9 @@ Histogram dropwizardHistogram = metricRegistry.histogram("myDropwizardHistogram"
 WavefrontHistogram wavefrontHistogram = WavefrontHistogram.get(metricRegistry, "myWavefrontHistogram");
 ```
 
+## Monitoring the SDK
+See the [diagnostic metrics documentation](https://github.com/wavefrontHQ/wavefront-dropwizard-metrics-sdk-java/tree/master/docs/internal_metrics.md) for details on the internal metrics that this SDK collects and reports to Wavefront.
+
 [ci-img]: https://travis-ci.com/wavefrontHQ/wavefront-dropwizard-metrics-sdk-java.svg?branch=master
 [ci]: https://travis-ci.com/wavefrontHQ/wavefront-dropwizard-metrics-sdk-java
 [maven-img]: https://img.shields.io/maven-central/v/com.wavefront/wavefront-dropwizard-metrics-sdk-java.svg?maxAge=604800
