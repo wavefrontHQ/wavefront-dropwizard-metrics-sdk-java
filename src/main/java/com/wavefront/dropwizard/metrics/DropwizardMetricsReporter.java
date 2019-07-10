@@ -437,9 +437,11 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
   private void reportCounter(String name, Counter counter) throws IOException {
     if (counter instanceof DeltaCounter) {
       long count = counter.getCount();
-      name = DELTA_PREFIX + prefixAndSanitize(name.substring(1), "count");
-      wavefrontSender.sendDeltaCounter(name, count, source, reporterPointTags);
-      counter.dec(count);
+      if (count > 0) {
+        name = DELTA_PREFIX + prefixAndSanitize(name.substring(1), "count");
+        wavefrontSender.sendDeltaCounter(name, count, source, reporterPointTags);
+        counter.dec(count);
+      }
     } else {
       wavefrontSender.sendMetric(prefixAndSanitize(name, "count"), counter.getCount(),
           clock.getTime() / 1000, source, reporterPointTags);
