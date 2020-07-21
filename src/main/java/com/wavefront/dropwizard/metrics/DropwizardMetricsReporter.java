@@ -49,6 +49,7 @@ import static com.wavefront.sdk.common.Constants.NULL_TAG_VAL;
 import static com.wavefront.sdk.common.Constants.SDK_METRIC_PREFIX;
 import static com.wavefront.sdk.common.Constants.SERVICE_TAG_KEY;
 import static com.wavefront.sdk.common.Constants.SHARD_TAG_KEY;
+import static com.wavefront.sdk.common.Utils.getSemVer;
 
 /**
  * A reporter which publishes metric values to a Wavefront cluster via proxy or direct ingestion
@@ -306,6 +307,9 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
             source(this.source).
             tags(this.reporterPointTags).
             build();
+
+    double sdkVersion = getSemVer();
+    sdkMetricsRegistry.newGauge("version", () -> sdkVersion);
 
     gaugesReported = sdkMetricsRegistry.newCounter("gauges.reported");
     deltaCountersReported = sdkMetricsRegistry.newCounter("delta_counters.reported");
