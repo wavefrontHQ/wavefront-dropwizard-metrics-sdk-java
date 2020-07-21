@@ -23,6 +23,7 @@ import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
 import com.codahale.metrics.jvm.ThreadStatesGaugeSet;
 import com.wavefront.sdk.common.WavefrontSender;
 import com.wavefront.sdk.common.application.ApplicationTags;
+import com.wavefront.sdk.common.clients.WavefrontClient;
 import com.wavefront.sdk.common.metrics.WavefrontSdkCounter;
 import com.wavefront.sdk.common.metrics.WavefrontSdkMetricsRegistry;
 import com.wavefront.sdk.entities.histograms.HistogramGranularity;
@@ -34,6 +35,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.concurrent.Executors;
@@ -49,6 +51,7 @@ import static com.wavefront.sdk.common.Constants.NULL_TAG_VAL;
 import static com.wavefront.sdk.common.Constants.SDK_METRIC_PREFIX;
 import static com.wavefront.sdk.common.Constants.SERVICE_TAG_KEY;
 import static com.wavefront.sdk.common.Constants.SHARD_TAG_KEY;
+import static com.wavefront.sdk.common.Utils.getSemVer;
 
 /**
  * A reporter which publishes metric values to a Wavefront cluster via proxy or direct ingestion
@@ -306,6 +309,9 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
             source(this.source).
             tags(this.reporterPointTags).
             build();
+
+    double sdkVersion = getSemVer();
+    sdkMetricsRegistry.newGauge("version", () -> sdkVersion);
 
     gaugesReported = sdkMetricsRegistry.newCounter("gauges.reported");
     deltaCountersReported = sdkMetricsRegistry.newCounter("delta_counters.reported");
