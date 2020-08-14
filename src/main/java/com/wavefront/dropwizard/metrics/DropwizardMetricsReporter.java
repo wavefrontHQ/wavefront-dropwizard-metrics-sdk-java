@@ -389,7 +389,7 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
 
   private void reportTimer(String name, Timer timer) throws IOException {
     final Snapshot snapshot = timer.getSnapshot();
-    final long time = clock.getTime() / 1000;
+    final long time = clock.getTime();
     sendIfEnabled(MetricAttribute.MAX, name, convertDuration(snapshot.getMax()), time);
     sendIfEnabled(MetricAttribute.MEAN, name, convertDuration(snapshot.getMean()), time);
     sendIfEnabled(MetricAttribute.MIN, name, convertDuration(snapshot.getMin()), time);
@@ -405,7 +405,7 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
   }
 
   private void reportMetered(String name, Metered meter) throws IOException {
-    final long time = clock.getTime() / 1000;
+    final long time = clock.getTime();
     sendIfEnabled(MetricAttribute.COUNT, name, meter.getCount(), time);
     sendIfEnabled(MetricAttribute.M1_RATE, name, convertRate(meter.getOneMinuteRate()), time);
     sendIfEnabled(MetricAttribute.M5_RATE, name, convertRate(meter.getFiveMinuteRate()), time);
@@ -423,7 +423,7 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
       }
     } else {
       final Snapshot snapshot = histogram.getSnapshot();
-      final long time = clock.getTime() / 1000;
+      final long time = clock.getTime();
       sendIfEnabled(MetricAttribute.COUNT, name, histogram.getCount(), time);
       sendIfEnabled(MetricAttribute.MAX, name, snapshot.getMax(), time);
       sendIfEnabled(MetricAttribute.MEAN, name, snapshot.getMean(), time);
@@ -448,13 +448,13 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
       }
     } else {
       wavefrontSender.sendMetric(prefixAndSanitize(name, "count"), counter.getCount(),
-          clock.getTime() / 1000, source, reporterPointTags);
+          clock.getTime(), source, reporterPointTags);
     }
   }
 
   private void reportGauge(String name, Gauge<Number> gauge) throws IOException {
     wavefrontSender.sendMetric(prefixAndSanitize(name), gauge.getValue().doubleValue(),
-        clock.getTime() / 1000, source, reporterPointTags);
+        clock.getTime(), source, reporterPointTags);
   }
 
   private void sendIfEnabled(MetricAttribute type, String name, double value, long timestamp)
