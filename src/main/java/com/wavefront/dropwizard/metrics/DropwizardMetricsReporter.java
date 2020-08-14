@@ -443,7 +443,7 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
       long count = counter.getCount();
       if (count > 0) {
         name = DELTA_PREFIX + prefixAndSanitize(name.substring(1), "count");
-        wavefrontSender.sendDeltaCounter(name, count, source, reporterPointTags);
+        wavefrontSender.sendDeltaCounter(name, count, clock.getTime(), source, reporterPointTags);
         counter.dec(count);
       }
     } else {
