@@ -337,15 +337,16 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
                      SortedMap<String, Meter> meters,
                      SortedMap<String, Timer> timers) {
     try {
+      final long timestamp = clock.getTime();
       for (Map.Entry<String, Gauge> entry : gauges.entrySet()) {
         if (entry.getValue().getValue() instanceof Number) {
-          reportGauge(entry.getKey(), entry.getValue());
+          reportGauge(entry.getKey(), entry.getValue(), timestamp);
           gaugesReported.inc();
         }
       }
 
       for (Map.Entry<String, Counter> entry : counters.entrySet()) {
-        reportCounter(entry.getKey(), entry.getValue());
+        reportCounter(entry.getKey(), entry.getValue(), timestamp);
         if (entry.getValue() instanceof DeltaCounter) {
           deltaCountersReported.inc();
         } else {
@@ -354,7 +355,7 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
       }
 
       for (Map.Entry<String, Histogram> entry : histograms.entrySet()) {
-        reportHistogram(entry.getKey(), entry.getValue());
+        reportHistogram(entry.getKey(), entry.getValue(), timestamp);
         if (entry.getValue() instanceof WavefrontHistogram) {
           wfHistogramsReported.inc();
         } else {
@@ -363,12 +364,12 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
       }
 
       for (Map.Entry<String, Meter> entry : meters.entrySet()) {
-        reportMetered(entry.getKey(), entry.getValue());
+        reportMetered(entry.getKey(), entry.getValue(), timestamp);
         metersReported.inc();
       }
 
       for (Map.Entry<String, Timer> entry : timers.entrySet()) {
-        reportTimer(entry.getKey(), entry.getValue());
+        reportTimer(entry.getKey(), entry.getValue(), timestamp);
         timersReported.inc();
       }
 
@@ -387,33 +388,38 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
     return wavefrontSender.getFailureCount();
   }
 
-  private void reportTimer(String name, Timer timer) throws IOException {
+  private void reportTimer(String name, Timer timer, long timestamp) throws IOException {
     final Snapshot snapshot = timer.getSnapshot();
-    final long time = clock.getTime();
-    sendIfEnabled(MetricAttribute.MAX, name, convertDuration(snapshot.getMax()), time);
-    sendIfEnabled(MetricAttribute.MEAN, name, convertDuration(snapshot.getMean()), time);
-    sendIfEnabled(MetricAttribute.MIN, name, convertDuration(snapshot.getMin()), time);
-    sendIfEnabled(MetricAttribute.STDDEV, name, convertDuration(snapshot.getStdDev()), time);
-    sendIfEnabled(MetricAttribute.P50, name, convertDuration(snapshot.getMedian()), time);
-    sendIfEnabled(MetricAttribute.P75, name, convertDuration(snapshot.get75thPercentile()), time);
-    sendIfEnabled(MetricAttribute.P95, name, convertDuration(snapshot.get95thPercentile()), time);
-    sendIfEnabled(MetricAttribute.P98, name, convertDuration(snapshot.get98thPercentile()), time);
-    sendIfEnabled(MetricAttribute.P99, name, convertDuration(snapshot.get99thPercentile()), time);
-    sendIfEnabled(MetricAttribute.P999, name, convertDuration(snapshot.get999thPercentile()), time);
 
-    reportMetered(name, timer);
+    sendIfEnabled(MetricAttribute.MAX, name, convertDuration(snapshot.getMax()), timestamp);
+    sendIfEnabled(MetricAttribute.MEAN, name, convertDuration(snapshot.getMean()), timestamp);
+    sendIfEnabled(MetricAttribute.MIN, name, convertDuration(snapshot.getMin()), timestamp);
+    sendIfEnabled(MetricAttribute.STDDEV, name, convertDuration(snapshot.getStdDev()), timestamp);
+    sendIfEnabled(MetricAttribute.P50, name, convertDuration(snapshot.getMedian()), timestamp);
+    sendIfEnabled(MetricAttribute.P75, name, convertDuration(snapshot.get75thPercentile()),
+        timestamp);
+    sendIfEnabled(MetricAttribute.P95, name, convertDuration(snapshot.get95thPercentile()),
+        timestamp);
+    sendIfEnabled(MetricAttribute.P98, name, convertDuration(snapshot.get98thPercentile()),
+        timestamp);
+    sendIfEnabled(MetricAttribute.P99, name, convertDuration(snapshot.get99thPercentile()),
+        timestamp);
+    sendIfEnabled(MetricAttribute.P999, name, convertDuration(snapshot.get999thPercentile()),
+        timestamp);
+
+    reportMetered(name, timer, timestamp);
   }
 
-  private void reportMetered(String name, Metered meter) throws IOException {
-    final long time = clock.getTime();
-    sendIfEnabled(MetricAttribute.COUNT, name, meter.getCount(), time);
-    sendIfEnabled(MetricAttribute.M1_RATE, name, convertRate(meter.getOneMinuteRate()), time);
-    sendIfEnabled(MetricAttribute.M5_RATE, name, convertRate(meter.getFiveMinuteRate()), time);
-    sendIfEnabled(MetricAttribute.M15_RATE, name, convertRate(meter.getFifteenMinuteRate()), time);
-    sendIfEnabled(MetricAttribute.MEAN_RATE, name, convertRate(meter.getMeanRate()), time);
+  private void reportMetered(String name, Metered meter, long timestamp) throws IOException {
+    sendIfEnabled(MetricAttribute.COUNT, name, meter.getCount(), timestamp);
+    sendIfEnabled(MetricAttribute.M1_RATE, name, convertRate(meter.getOneMinuteRate()), timestamp);
+    sendIfEnabled(MetricAttribute.M5_RATE, name, convertRate(meter.getFiveMinuteRate()), timestamp);
+    sendIfEnabled(MetricAttribute.M15_RATE, name, convertRate(meter.getFifteenMinuteRate()),
+        timestamp);
+    sendIfEnabled(MetricAttribute.MEAN_RATE, name, convertRate(meter.getMeanRate()), timestamp);
   }
 
-  private void reportHistogram(String name, Histogram histogram) throws IOException {
+  private void reportHistogram(String name, Histogram histogram, long timestamp) throws IOException {
     if (histogram instanceof WavefrontHistogram) {
       String histogramName = prefixAndSanitize(name);
       for (WavefrontHistogramImpl.Distribution distribution :
@@ -423,38 +429,37 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
       }
     } else {
       final Snapshot snapshot = histogram.getSnapshot();
-      final long time = clock.getTime();
-      sendIfEnabled(MetricAttribute.COUNT, name, histogram.getCount(), time);
-      sendIfEnabled(MetricAttribute.MAX, name, snapshot.getMax(), time);
-      sendIfEnabled(MetricAttribute.MEAN, name, snapshot.getMean(), time);
-      sendIfEnabled(MetricAttribute.MIN, name, snapshot.getMin(), time);
-      sendIfEnabled(MetricAttribute.STDDEV, name, snapshot.getStdDev(), time);
-      sendIfEnabled(MetricAttribute.P50, name, snapshot.getMedian(), time);
-      sendIfEnabled(MetricAttribute.P75, name, snapshot.get75thPercentile(), time);
-      sendIfEnabled(MetricAttribute.P95, name, snapshot.get95thPercentile(), time);
-      sendIfEnabled(MetricAttribute.P98, name, snapshot.get98thPercentile(), time);
-      sendIfEnabled(MetricAttribute.P99, name, snapshot.get99thPercentile(), time);
-      sendIfEnabled(MetricAttribute.P999, name, snapshot.get999thPercentile(), time);
+      sendIfEnabled(MetricAttribute.COUNT, name, histogram.getCount(), timestamp);
+      sendIfEnabled(MetricAttribute.MAX, name, snapshot.getMax(), timestamp);
+      sendIfEnabled(MetricAttribute.MEAN, name, snapshot.getMean(), timestamp);
+      sendIfEnabled(MetricAttribute.MIN, name, snapshot.getMin(), timestamp);
+      sendIfEnabled(MetricAttribute.STDDEV, name, snapshot.getStdDev(), timestamp);
+      sendIfEnabled(MetricAttribute.P50, name, snapshot.getMedian(), timestamp);
+      sendIfEnabled(MetricAttribute.P75, name, snapshot.get75thPercentile(), timestamp);
+      sendIfEnabled(MetricAttribute.P95, name, snapshot.get95thPercentile(), timestamp);
+      sendIfEnabled(MetricAttribute.P98, name, snapshot.get98thPercentile(), timestamp);
+      sendIfEnabled(MetricAttribute.P99, name, snapshot.get99thPercentile(), timestamp);
+      sendIfEnabled(MetricAttribute.P999, name, snapshot.get999thPercentile(), timestamp);
     }
   }
 
-  private void reportCounter(String name, Counter counter) throws IOException {
+  private void reportCounter(String name, Counter counter, long timestamp) throws IOException {
     if (counter instanceof DeltaCounter) {
       long count = counter.getCount();
       if (count > 0) {
         name = DELTA_PREFIX + prefixAndSanitize(name.substring(1), "count");
-        wavefrontSender.sendDeltaCounter(name, count, clock.getTime(), source, reporterPointTags);
+        wavefrontSender.sendDeltaCounter(name, count, timestamp, source, reporterPointTags);
         counter.dec(count);
       }
     } else {
       wavefrontSender.sendMetric(prefixAndSanitize(name, "count"), counter.getCount(),
-          clock.getTime(), source, reporterPointTags);
+          timestamp, source, reporterPointTags);
     }
   }
 
-  private void reportGauge(String name, Gauge<Number> gauge) throws IOException {
+  private void reportGauge(String name, Gauge<Number> gauge, long timestamp) throws IOException {
     wavefrontSender.sendMetric(prefixAndSanitize(name), gauge.getValue().doubleValue(),
-        clock.getTime(), source, reporterPointTags);
+        timestamp, source, reporterPointTags);
   }
 
   private void sendIfEnabled(MetricAttribute type, String name, double value, long timestamp)
