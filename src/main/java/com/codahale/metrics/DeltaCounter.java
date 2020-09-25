@@ -15,7 +15,7 @@ public class DeltaCounter extends Counter {
   private DeltaCounter() {
   }
 
-  public static synchronized DeltaCounter get(MetricRegistry registry, String metricName) {
+  public static DeltaCounter get(MetricRegistry registry, String metricName) {
     if (registry == null || metricName == null || metricName.isEmpty()) {
       throw new IllegalArgumentException("Invalid arguments");
     }
@@ -26,6 +26,10 @@ public class DeltaCounter extends Counter {
     }
     DeltaCounter counter = new DeltaCounter();
     try {
+      Metric metric = registry.getMetrics().get(metricName);
+      if (metric instanceof DeltaCounter) {
+        return (DeltaCounter) metric;
+      }
       return registry.register(metricName, counter);
     } catch(IllegalArgumentException e) {
       Counter existing = registry.counter(metricName);
