@@ -1,8 +1,124 @@
 # Wavefront Dropwizard Metrics SDK [![build status][ci-img]][ci] [![Released Version][maven-img]][maven]
 
+## Table of Content
+* [Prerequisites](#Prerequisites)
+* [Set Up a DropwizardMetricsReporter](#)
+  * [Step 1: Create a Builder for a DropwizardMetricsReporter](##step-1-create-a-builder-for-a-dropwizardmetricsreporter)
+  * [Step 2: Configure the DropwizardMetricsReporter](#step-2-configure-the-dropwizardmetricsreporter)
+  * [Step 3: Set Up a WavefrontSender](#step-3-set-up-a-wavefrontsender)
+  * [Step 4: Create a DropwizardMetricsReporter](#step-4-create-a-dropwizardmetricsreporter)
+* [Start the DropwizardMetricsReporter](#start-the-dropwizardmetricsreporter)
+* [Types of Data You Can Report to Wavefront](#types-of-data-you-can-report-to-wavefront)
+* [Monitoring the SDK](#monitoring-the-sdk)
+* [License](#License)
+* [How to Contribute](#How-to-Contribute)
+
+# Welcome to the Wavefront Dropwizard Metrics SDK
+
 The Wavefront by VMware Dropwizard Metrics SDK for Java is a library that supports reporting [Dropwizard metrics and histograms](https://metrics.dropwizard.io) to Wavefront.
 
-## Maven
+**Before you start implementing, let us make sure you are using the correct SDK!**
+
+![Wavefront Dropwizard Metrics SDK Decision Tree](docs/java_dropwizard_metrics_sdk.png)
+
+> ***Note***:
+> </br>
+>   **This is the Tanzu Observability by Wavefront Metrics SDK  for the Java Dropwizard Framework!**
+>   If this SDK is not what you were looking for, see the [table](#wavefront-sdks) given below.
+
+#### Wavefront SDKs
+<table id="SDKlevels" style="width: 100%">
+<tr>
+  <th width="10%">SDK Type</th>
+  <th width="45%">SDK Description</th>
+  <th width="45%">Supported Languages</th>
+</tr>
+
+<tr>
+  <td><a href="https://docs.wavefront.com/wavefront_sdks.html#sdks-for-collecting-trace-data">OpenTracing SDK</a></td>
+  <td align="justify">Implements the OpenTracing specification. Lets you define, collect, and report custom trace data from any part of your application code. <br>Automatically derives Rate Errors Duration (RED) metrics from the reported spans. </td>
+  <td>
+    <ul>
+    <li>
+      <b>Java</b>: <a href ="https://github.com/wavefrontHQ/wavefront-opentracing-sdk-java">OpenTracing SDK</a> <b>|</b> <a href ="https://github.com/wavefrontHQ/wavefront-opentracing-bundle-java">Tracing Agent</a>
+    </li>
+    <li>
+      <b>Python</b>: <a href ="https://github.com/wavefrontHQ/wavefront-opentracing-sdk-python">OpenTracing SDK</a>
+    </li>
+    <li>
+      <b>Go</b>: <a href ="https://github.com/wavefrontHQ/wavefront-opentracing-sdk-go">OpenTracing SDK</a>
+    </li>
+    <li>
+      <b>.Net/C#</b>: <a href ="https://github.com/wavefrontHQ/wavefront-opentracing-sdk-csharp">OpenTracing SDK</a>
+    </li>
+    </ul>
+  </td>
+</tr>
+
+<tr>
+  <td><a href="https://docs.wavefront.com/wavefront_sdks.html#sdks-for-collecting-metrics-and-histograms">Metrics SDK</a></td>
+  <td align="justify">Implements a standard metrics library. Lets you define, collect, and report custom business metrics and histograms from any part of your application code.   </td>
+  <td>
+    <ul>
+    <li>
+    <b>Java</b>: <a href ="https://github.com/wavefrontHQ/wavefront-dropwizard-metrics-sdk-java">Dropwizard</a> <b>|</b> <a href ="https://github.com/wavefrontHQ/wavefront-runtime-sdk-jvm">JVM</a>
+    </li>
+    <li>
+    <b>Python</b>: <a href ="https://github.com/wavefrontHQ/wavefront-pyformance">Pyformance SDK</a>
+    </li>
+    <li>
+      <b>Go</b>: <a href ="https://github.com/wavefrontHQ/go-metrics-wavefront">Go Metrics SDK</a>
+      </li>
+    <li>
+    <b>.Net/C#</b>: <a href ="https://github.com/wavefrontHQ/wavefront-appmetrics-sdk-csharp">App Metrics SDK</a>
+    </li>
+    </ul>
+  </td>
+</tr>
+
+<tr>
+  <td><a href="https://docs.wavefront.com/wavefront_sdks.html#sdks-that-instrument-frameworks">Framework SDK</a></td>
+  <td align="justify">Reports predefined traces, metrics, and histograms from the APIs of a supported app framework. Lets you get started quickly with minimal code changes.</td>
+  <td>
+    <ul>
+    <li><b>Java</b>:
+    <a href="https://github.com/wavefrontHQ/wavefront-dropwizard-sdk-java">Dropwizard</a> <b>|</b> <a href="https://github.com/wavefrontHQ/wavefront-gRPC-sdk-java">gRPC</a> <b>|</b> <a href="https://github.com/wavefrontHQ/wavefront-jaxrs-sdk-java">JAX-RS</a> <b>|</b> <a href="https://github.com/wavefrontHQ/wavefront-jersey-sdk-java">Jersey</a></li>
+    <li><b>.Net/C#</b>:
+    <a href="https://github.com/wavefrontHQ/wavefront-aspnetcore-sdk-csharp">ASP.Net core</a> </li>
+    <!--- [Python](wavefront_sdks_python.html#python-sdks-that-instrument-frameworks) --->
+    </ul>
+  </td>
+</tr>
+
+<tr>
+  <td><a href="https://docs.wavefront.com/wavefront_sdks.html#sdks-for-sending-raw-data-to-wavefront">Sender SDK</a></td>
+  <td align="justify">Lets you send raw values to Wavefront for storage as metrics, histograms, or traces, e.g., to import CSV data into Wavefront.
+  </td>
+  <td>
+    <ul>
+    <li>
+    <b>Java</b>: <a href ="https://github.com/wavefrontHQ/wavefront-sdk-java">Sender SDK</a>
+    </li>
+    <li>
+    <b>Python</b>: <a href ="https://github.com/wavefrontHQ/wavefront-sdk-python">Sender SDK</a>
+    </li>
+    <li>
+    <b>Go</b>: <a href ="https://github.com/wavefrontHQ/wavefront-sdk-go">Sender SDK</a>
+    </li>
+    <li>
+    <b>.Net/C#</b>: <a href ="https://github.com/wavefrontHQ/wavefront-sdk-csharp">Sender SDK</a>
+    </li>
+    <li>
+    <b>C++</b>: <a href ="https://github.com/wavefrontHQ/wavefront-sdk-cpp">Sender SDK</a>
+    </li>
+    </ul>
+  </td>
+</tr>
+
+</tbody>
+</table>
+
+## Prerequisites
 If you are using Maven, add the following maven dependency to your pom.xml:
 ```
 <dependency>
@@ -25,7 +141,7 @@ The steps for creating a `DropwizardMetricsReporter` are:
 
 For the details of each step, see the sections below.
 
-### 1. Create a Builder for a DropwizardMetricsReporter
+### Step 1: Create a Builder for a DropwizardMetricsReporter
 
 A `DropwizardMetricsReporter` object reports any metrics and histograms you register in a `MetricRegistry`. This step creates a builder that supports configuring the metrics reporter.
 
@@ -37,7 +153,7 @@ MetricRegistry metricRegistry = new MetricRegistry();
 DropwizardMetricsReporter.Builder builder = DropwizardMetricsReporter.forRegistry(metricRegistry);
 ```
 
-### 2. Configure the DropwizardMetricsReporter
+### Step 2: Configure the DropwizardMetricsReporter
 
 You can use the `DropwizardMetricsReporter` builder to specify various optional properties.
 
@@ -95,15 +211,15 @@ builder.disabledMetricAttributes(ImmutableSet.<MetricAttribute>builder().
     build());
 ```
 
-### 3. Set Up a WavefrontSender
+### Step 3: Set Up a WavefrontSender
 A `WavefrontSender` object implements the low-level interface for sending data to Wavefront. 
 
-* If you have already set up a `WavefrontSender` for another SDK that will run in the same JVM, use that one.  (For details about sharing a `WavefrontSender` instance, see [Share a WavefrontSender](https://github.com/wavefrontHQ/wavefront-sdk-java/blob/master/docs/sender.md#share-a-wavefrontsender).)
+* If you have already set up a `WavefrontSender` for another SDK that will run in the same JVM, use that one.  (For details about sharing a `WavefrontSender` instance, see [Share a WavefrontSender](https://github.com/wavefrontHQ/wavefront-sdk-doc-sources/blob/master/java/wavefrontsender.md#share-a-wavefrontsender).)
 
-* Otherwise, follow the steps in [Set Up a WavefrontSender](https://github.com/wavefrontHQ/wavefront-sdk-java/blob/master/docs/sender.md#set-up-a-wavefrontsender) to send data using either the [Wavefront proxy](https://docs.wavefront.com/proxies.html) or [direct ingestion](https://docs.wavefront.com/direct_ingestion.html).
+* Otherwise, follow the steps in [Set Up a WavefrontSender](https://github.com/wavefrontHQ/wavefront-sdk-doc-sources/blob/master/java/wavefrontsender.md#wavefrontsender) to send data using either the [Wavefront proxy](https://docs.wavefront.com/proxies.html) or [direct ingestion](https://docs.wavefront.com/direct_ingestion.html).
 
 
-### 4. Create a DropwizardMetricsReporter
+### Step 4: Create a DropwizardMetricsReporter
 Use the configured builder to create the `DropwizardMetricsReporter`. You must specify the `WavefrontSender` object (see above).
 
 ```java
@@ -170,6 +286,15 @@ WavefrontHistogram wavefrontHistogram = WavefrontHistogram.get(metricRegistry, "
 
 ## Monitoring the SDK
 See the [diagnostic metrics documentation](https://github.com/wavefrontHQ/wavefront-dropwizard-metrics-sdk-java/tree/master/docs/internal_metrics.md) for details on the internal metrics that this SDK collects and reports to Wavefront.
+
+## License
+[Apache 2.0 License](LICENSE).
+
+## How to Contribute
+
+* Reach out to us on our public [Slack channel](https://www.wavefront.com/join-public-slack).
+* If you run into any issues, let us know by creating a GitHub issue.
+* If you didn't find the information you are looking for in our Wavefront Documentation create a GitHub issue or PR.
 
 [ci-img]: https://travis-ci.com/wavefrontHQ/wavefront-dropwizard-metrics-sdk-java.svg?branch=master
 [ci]: https://travis-ci.com/wavefrontHQ/wavefront-dropwizard-metrics-sdk-java
