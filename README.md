@@ -2,13 +2,13 @@
 
 ## Table of Content
 * [Prerequisites](#Prerequisites)
-* [Set Up a DropwizardMetricsReporter](##set-up-a-dropwizardmetricsreporter)
+* [Set Up a DropwizardMetricsReporter](#set-up-a-dropwizardmetricsreporter)
   * [Step 1: Create a Builder for a DropwizardMetricsReporter](#step-1-create-a-builder-for-a-dropwizardmetricsreporter)
   * [Step 2: Configure the DropwizardMetricsReporter](#step-2-configure-the-dropwizardmetricsreporter)
   * [Step 3: Set Up a WavefrontSender](#step-3-set-up-a-wavefrontsender)
   * [Step 4: Create a DropwizardMetricsReporter](#step-4-create-a-dropwizardmetricsreporter)
 * [Start the DropwizardMetricsReporter](#start-the-dropwizardmetricsreporter)
-* [Stop the DropwizardMetricsReporter](#update-readme#stop-the-dropwizardmetricsreporter)
+* [Stop the DropwizardMetricsReporter](#stop-the-dropwizardmetricsreporter)
 * [Types of Data You Can Report to Wavefront](#types-of-data-you-can-report-to-wavefront)
 * [Monitoring the SDK](#monitoring-the-sdk)
 * [License](#License)
@@ -16,7 +16,7 @@
 
 # Welcome to the Wavefront Dropwizard Metrics SDK
 
-The Wavefront by VMware Dropwizard Metrics SDK for Java is a library that supports reporting [Dropwizard metrics and histograms](https://metrics.dropwizard.io) to Wavefront.
+The Wavefront by Tanzu Observability by Wavefront Dropwizard Metrics SDK for Java is a library that supports reporting [Dropwizard metrics and histograms](https://metrics.dropwizard.io) to Wavefront.
 
 **Before you start implementing, let us make sure you are using the correct SDK!**
 
@@ -120,7 +120,7 @@ The Wavefront by VMware Dropwizard Metrics SDK for Java is a library that suppor
 </table>
 
 ## Prerequisites
-If you are using Maven, add the following maven dependency to your pom.xml:
+If you are using Maven, add the following maven dependency to your pom.xml file:
 ```
 <dependency>
     <groupId>com.wavefront</groupId>
@@ -132,15 +132,15 @@ Replace `$releaseVersion` with the latest version available on [maven](http://se
 
 ## Set Up a DropwizardMetricsReporter
 
-This SDK provides a `DropwizardMetricsReporter` for reporting metrics and histograms to Wavefront.
+This SDK provides a `DropwizardMetricsReporter` to report metrics and histograms to Wavefront.
 
 The steps for creating a `DropwizardMetricsReporter` are:
 1. Create a `DropwizardMetricsReporter.Builder` instance.
-2. Optionally use the builder to configure the `DropwizardMetricsReporter`.
-3. Create a `WavefrontSender` for sending data to Wavefront.
+2. Optionally, use the builder to configure the `DropwizardMetricsReporter`.
+3. Create a `WavefrontSender` to send data to Wavefront.
 4. Use the builder to create a `DropwizardMetricsReporter` with the `WavefrontSender`.
 
-For the details of each step, see the sections below.
+For details of each step, see the sections below.
 
 ### Step 1: Create a Builder for a DropwizardMetricsReporter
 
@@ -213,9 +213,9 @@ builder.disabledMetricAttributes(ImmutableSet.<MetricAttribute>builder().
 ```
 
 ### Step 3: Set Up a WavefrontSender
-A `WavefrontSender` object implements the low-level interface for sending data to Wavefront. 
+A `WavefrontSender` object implements the low-level interface to send data to Wavefront. 
 
-* If you have already set up a `WavefrontSender` for another SDK that will run in the same JVM, use that one.  (For details about sharing a `WavefrontSender` instance, see [Share a WavefrontSender](https://github.com/wavefrontHQ/wavefront-sdk-doc-sources/blob/master/java/wavefrontsender.md#share-a-wavefrontsender).)
+* If you have already set up a `WavefrontSender` for another SDK that runs in the same Java Virtual Machine (JVM), use that one. For details about sharing a `WavefrontSender` instance, see [Share a WavefrontSender](https://github.com/wavefrontHQ/wavefront-sdk-doc-sources/blob/master/java/wavefrontsender.md#Share-a-WavefrontSender).
 
 * Otherwise, follow the steps in [Set Up a WavefrontSender](https://github.com/wavefrontHQ/wavefront-sdk-doc-sources/blob/master/java/wavefrontsender.md#wavefrontsender) to send data using either the [Wavefront proxy](https://docs.wavefront.com/proxies.html) or [direct ingestion](https://docs.wavefront.com/direct_ingestion.html).
 
@@ -230,7 +230,7 @@ DropwizardMetricsReporter dropwizardMetricsReporter = builder.build(wavefrontSen
 ```
 ## Start the DropwizardMetricsReporter
 
-You start the `DropwizardMetricsReporter` explicitly to start reporting any metrics or histograms you create. Reporting continues until you stop the `DropwizardMetricsReporter` (see below).
+You must explicitly start the `DropwizardMetricsReporter` to start reporting any metrics or histograms you create. Reporting continues until you stop the `DropwizardMetricsReporter` (see below).
 
 The `DropwizardMetricsReporter` reports metrics/histograms at regular intervals. You specify the length of the reporting interval to control how often data is forwarded to the `WavefrontSender`. The reporting interval determines the timestamps on the data sent to Wavefront.
 
