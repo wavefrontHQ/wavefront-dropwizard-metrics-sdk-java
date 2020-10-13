@@ -4,7 +4,7 @@
 * [Prerequisites](#Prerequisites)
 * [Set Up a DropwizardMetricsReporter](#set-up-a-dropwizardmetricsreporter)
   * [Step 1: Create a Builder for a DropwizardMetricsReporter](#step-1-create-a-builder-for-a-dropwizardmetricsreporter)
-  * [Step 2: Configure the DropwizardMetricsReporter](#step-2-configure-the-dropwizardmetricsreporter)
+  * [Step 2: Configure the DropwizardMetricsReporter](#step-2-configure-the-dropwizardmetricsreporter-optional)
   * [Step 3: Set Up a WavefrontSender](#step-3-set-up-a-wavefrontsender)
   * [Step 4: Create a DropwizardMetricsReporter](#step-4-create-a-dropwizardmetricsreporter)
 * [Start the DropwizardMetricsReporter](#start-the-dropwizardmetricsreporter)
@@ -154,7 +154,7 @@ MetricRegistry metricRegistry = new MetricRegistry();
 DropwizardMetricsReporter.Builder builder = DropwizardMetricsReporter.forRegistry(metricRegistry);
 ```
 
-### Step 2: Configure the DropwizardMetricsReporter
+### Step 2: Configure the DropwizardMetricsReporter (Optional)
 
 You can use the `DropwizardMetricsReporter` builder to specify various optional properties.
 
@@ -295,7 +295,7 @@ See the [diagnostic metrics documentation](https://github.com/wavefrontHQ/wavefr
 
 * Reach out to us on our public [Slack channel](https://www.wavefront.com/join-public-slack).
 * If you run into any issues, let us know by creating a GitHub issue.
-* If you didn't find the information you are looking for in our Wavefront Documentation create a GitHub issue or PR.
+* If you didn't find the information you are looking for in our Wavefront Documentation, create a GitHub issue or PR.
 
 [ci-img]: https://travis-ci.com/wavefrontHQ/wavefront-dropwizard-metrics-sdk-java.svg?branch=master
 [ci]: https://travis-ci.com/wavefrontHQ/wavefront-dropwizard-metrics-sdk-java
