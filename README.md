@@ -230,9 +230,9 @@ DropwizardMetricsReporter dropwizardMetricsReporter = builder.build(wavefrontSen
 ```
 ## Start the DropwizardMetricsReporter
 
-You must explicitly start the `DropwizardMetricsReporter` to start reporting any metrics or histograms you create. Reporting continues until you stop the `DropwizardMetricsReporter` (see below).
+You need to explicitly start the `DropwizardMetricsReporter` to start reporting any metrics or histograms you create. Reporting continues until you stop the `DropwizardMetricsReporter` (see below).
 
-The `DropwizardMetricsReporter` reports metrics/histograms at regular intervals. You specify the length of the reporting interval to control how often data is forwarded to the `WavefrontSender`. The reporting interval determines the timestamps on the data sent to Wavefront.
+The `DropwizardMetricsReporter` reports metrics/histograms at regular intervals. You can control how often you need to send data to the `WavefrontSender` by specifying the length of the reporting interval. The reporting interval determines the timestamps on the data sent to Wavefront.
 
 ```java
 // Start the reporter to report metrics/histograms at regular interval (example: 30s)
