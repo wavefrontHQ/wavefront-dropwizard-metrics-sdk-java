@@ -2,12 +2,13 @@
 
 ## Table of Content
 * [Prerequisites](#Prerequisites)
-* [Set Up a DropwizardMetricsReporter](#)
-  * [Step 1: Create a Builder for a DropwizardMetricsReporter](##step-1-create-a-builder-for-a-dropwizardmetricsreporter)
+* [Set Up a DropwizardMetricsReporter](##set-up-a-dropwizardmetricsreporter)
+  * [Step 1: Create a Builder for a DropwizardMetricsReporter](#step-1-create-a-builder-for-a-dropwizardmetricsreporter)
   * [Step 2: Configure the DropwizardMetricsReporter](#step-2-configure-the-dropwizardmetricsreporter)
   * [Step 3: Set Up a WavefrontSender](#step-3-set-up-a-wavefrontsender)
   * [Step 4: Create a DropwizardMetricsReporter](#step-4-create-a-dropwizardmetricsreporter)
 * [Start the DropwizardMetricsReporter](#start-the-dropwizardmetricsreporter)
+* [Stop the DropwizardMetricsReporter](#update-readme#stop-the-dropwizardmetricsreporter)
 * [Types of Data You Can Report to Wavefront](#types-of-data-you-can-report-to-wavefront)
 * [Monitoring the SDK](#monitoring-the-sdk)
 * [License](#License)
