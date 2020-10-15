@@ -78,7 +78,7 @@ The Tanzu Observability by Wavefront Dropwizard Metrics SDK for Java is a librar
 </tr>
 
 <tr>
-  <td><a href="https://docs.wavefront.com/wavefront_sdks.html#sdks-that-instrument-frameworks">Framework SDK</a></td>
+  <td>Framework SDK</td>
   <td align="justify">Reports predefined traces, metrics, and histograms from the APIs of a supported app framework. Lets you get started quickly with minimal code changes.</td>
   <td>
     <ul>
@@ -144,7 +144,7 @@ For details of each step, see the sections below.
 
 ### Step 1: Create a Builder for a DropwizardMetricsReporter
 
-A `DropwizardMetricsReporter` object reports any metrics, delta counters, and histograms you register in a `MetricRegistry`. This step creates a builder that supports configuring the metrics reporter.
+The `DropwizardMetricsReporter` object reports any metrics, delta counters, and histograms you register in a `MetricRegistry`. This step creates a builder that supports configuring the metrics reporter.
 
 ```java
 // Create a registry
@@ -213,7 +213,7 @@ builder.disabledMetricAttributes(ImmutableSet.<MetricAttribute>builder().
 ```
 
 ### Step 3: Set Up a WavefrontSender
-A `WavefrontSender` object implements the low-level interface to send data to Wavefront. 
+The `WavefrontSender` object implements the low-level interface to send data to Wavefront. 
 
 * If you have already set up a `WavefrontSender` for another SDK that runs in the same Java Virtual Machine (JVM), use that one. For details about sharing a `WavefrontSender` instance, see [Share a WavefrontSender](https://github.com/wavefrontHQ/wavefront-sdk-doc-sources/blob/master/java/wavefrontsender.md#Share-a-WavefrontSender).
 
