@@ -17,4 +17,4 @@ The following is a list of the diagnostic metrics that are collected:
 
 The same source and application tags used in the `DropwizardMetricsReporter` are used to report the metrics shown above.
 
-For details on diagnostic metrics for your `WavefrontSender` instance, see [Internal Diagnostic Metrics for Java SDKs](https://github.com/wavefrontHQ/wavefront-sdk-java/tree/master/docs/internal_metrics.md).
+For details on diagnostic metrics for your `WavefrontSender` instance, see [Internal Diagnostic Metrics for Java SDKs](https://github.com/wavefrontHQ/wavefront-sdk-doc-sources/blob/master/java/internalmetrics.md#internal-diagnostic-metrics).
