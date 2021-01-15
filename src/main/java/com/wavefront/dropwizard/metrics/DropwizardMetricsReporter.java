@@ -23,7 +23,7 @@ import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
 import com.codahale.metrics.jvm.ThreadStatesGaugeSet;
 import com.wavefront.sdk.common.WavefrontSender;
 import com.wavefront.sdk.common.application.ApplicationTags;
-import com.wavefront.sdk.common.metrics.WavefrontSdkCounter;
+import com.wavefront.sdk.common.metrics.WavefrontSdkDeltaCounter;
 import com.wavefront.sdk.common.metrics.WavefrontSdkMetricsRegistry;
 import com.wavefront.sdk.entities.histograms.HistogramGranularity;
 import com.wavefront.sdk.entities.histograms.WavefrontHistogramImpl;
@@ -260,14 +260,14 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
   private final Set<HistogramGranularity> histogramGranularities;
   private final WavefrontSdkMetricsRegistry sdkMetricsRegistry;
 
-  private final WavefrontSdkCounter gaugesReported;
-  private final WavefrontSdkCounter deltaCountersReported;
-  private final WavefrontSdkCounter countersReported;
-  private final WavefrontSdkCounter wfHistogramsReported;
-  private final WavefrontSdkCounter histogramsReported;
-  private final WavefrontSdkCounter metersReported;
-  private final WavefrontSdkCounter timersReported;
-  private final WavefrontSdkCounter reportErrors;
+  private final WavefrontSdkDeltaCounter gaugesReported;
+  private final WavefrontSdkDeltaCounter deltaCountersReported;
+  private final WavefrontSdkDeltaCounter countersReported;
+  private final WavefrontSdkDeltaCounter wfHistogramsReported;
+  private final WavefrontSdkDeltaCounter histogramsReported;
+  private final WavefrontSdkDeltaCounter metersReported;
+  private final WavefrontSdkDeltaCounter timersReported;
+  private final WavefrontSdkDeltaCounter reportErrors;
 
   private DropwizardMetricsReporter(MetricRegistry registry,
                                     WavefrontSender wavefrontSender,
@@ -311,14 +311,14 @@ public class DropwizardMetricsReporter extends ScheduledReporter {
     double sdkVersion = getSemVerGauge("wavefront-dropwizard-metrics-sdk-java");
     sdkMetricsRegistry.newGauge("version", () -> sdkVersion);
 
-    gaugesReported = sdkMetricsRegistry.newCounter("gauges.reported");
-    deltaCountersReported = sdkMetricsRegistry.newCounter("delta_counters.reported");
-    countersReported = sdkMetricsRegistry.newCounter("counters.reported");
-    wfHistogramsReported = sdkMetricsRegistry.newCounter("wavefront_histograms.reported");
-    histogramsReported = sdkMetricsRegistry.newCounter("histograms.reported");
-    metersReported = sdkMetricsRegistry.newCounter("meters.reported");
-    timersReported = sdkMetricsRegistry.newCounter("timers.reported");
-    reportErrors = sdkMetricsRegistry.newCounter("errors");
+    gaugesReported = sdkMetricsRegistry.newDeltaCounter("gauges.reported");
+    deltaCountersReported = sdkMetricsRegistry.newDeltaCounter("delta_counters.reported");
+    countersReported = sdkMetricsRegistry.newDeltaCounter("counters.reported");
+    wfHistogramsReported = sdkMetricsRegistry.newDeltaCounter("wavefront_histograms.reported");
+    histogramsReported = sdkMetricsRegistry.newDeltaCounter("histograms.reported");
+    metersReported = sdkMetricsRegistry.newDeltaCounter("meters.reported");
+    timersReported = sdkMetricsRegistry.newDeltaCounter("timers.reported");
+    reportErrors = sdkMetricsRegistry.newDeltaCounter("errors");
   }
 
   private <T extends Metric> void tryRegister(MetricRegistry registry, String name, T metric) {

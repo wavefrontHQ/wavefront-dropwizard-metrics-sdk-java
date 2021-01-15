@@ -6,14 +6,14 @@ The following is a list of the diagnostic metrics that are collected:
 
 |Metric Name|Metric Type|Description|
 |:---|:---:|:---|
-|~sdk.java.dropwizard_metrics.reporter.gauges.reported.count                |Counter    |The number of gauges reported.|
-|~sdk.java.dropwizard_metrics.reporter.delta_counters.reported.count        |Counter    |The number of delta counters reported.|
-|~sdk.java.dropwizard_metrics.reporter.counters.reported.count              |Counter    |The number of non-delta counters reported.|
-|~sdk.java.dropwizard_metrics.reporter.wavefront_histograms.reported.count  |Counter    |The number of Wavefront histograms reported.|
-|~sdk.java.dropwizard_metrics.reporter.histograms.reported.count            |Counter    |The number of non-Wavefront histograms reported.|
-|~sdk.java.dropwizard_metrics.reporter.meters.reported.count                |Counter    |The number of meters reported.|
-|~sdk.java.dropwizard_metrics.reporter.timers.reported.count                |Counter    |The number of timers reported.|
-|~sdk.java.dropwizard_metrics.reporter.errors.count                         |Counter    |The number of exceptions encountered while reporting.|
+|~sdk.java.dropwizard_metrics.reporter.gauges.reported.count                |Delta Counter    |The number of gauges reported.|
+|~sdk.java.dropwizard_metrics.reporter.delta_counters.reported.count        |Delta Counter    |The number of delta counters reported.|
+|~sdk.java.dropwizard_metrics.reporter.counters.reported.count              |Delta Counter    |The number of non-delta counters reported.|
+|~sdk.java.dropwizard_metrics.reporter.wavefront_histograms.reported.count  |Delta Counter    |The number of Wavefront histograms reported.|
+|~sdk.java.dropwizard_metrics.reporter.histograms.reported.count            |Delta Counter    |The number of non-Wavefront histograms reported.|
+|~sdk.java.dropwizard_metrics.reporter.meters.reported.count                |Delta Counter    |The number of meters reported.|
+|~sdk.java.dropwizard_metrics.reporter.timers.reported.count                |Delta Counter    |The number of timers reported.|
+|~sdk.java.dropwizard_metrics.reporter.errors.count                         |Delta Counter    |The number of exceptions encountered while reporting.|
 
 The same source and application tags used in the `DropwizardMetricsReporter` are used to report the metrics shown above.
 
